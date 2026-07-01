@@ -269,18 +269,16 @@ async def get_smart_money_signals(
             "updated_at":    _smc_cache.get("updated_at", _now_ist().isoformat()),
         }
 
-    # Cold start — must block once to populate cache
-    async with _smc_lock:
-        if _smc_cache.get("signals") is None:
-            await _refresh_smc(pair_list, FOREX_PAIRS, scan_all, signal_to_dict)
-
-    sigs = _smc_cache.get("signals", [])
+    # Cold start — kick off background refresh, return immediately
+    _asyncio.ensure_future(
+        _refresh_smc(pair_list, FOREX_PAIRS, scan_all, signal_to_dict)
+    )
     return {
-        "status":        "ok",
-        "count":         len(sigs),
-        "pairs_scanned": _smc_cache.get("pairs_scanned") or len(FOREX_PAIRS),
-        "signals":       sigs,
-        "updated_at":    _smc_cache.get("updated_at", _now_ist().isoformat()),
+        "status":        "loading",
+        "count":         0,
+        "pairs_scanned": len(FOREX_PAIRS),
+        "signals":       [],
+        "updated_at":    _now_ist().isoformat(),
     }
 
 

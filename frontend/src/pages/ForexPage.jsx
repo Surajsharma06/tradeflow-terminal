@@ -429,11 +429,18 @@ export default function ForexPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API}/api/v1/signals/smart-money-forex`);
+      const res = await fetch(`${API}/api/v1/signals/smart-money-forex`, { signal: AbortSignal.timeout(25000) });
       if (!res.ok) throw new Error(`API ${res.status}`);
       const data = await res.json();
+      if (data.status === 'loading') {
+        // Backend is warming up — retry in 8 seconds
+        setError('Backend warming up… live signals in a few seconds.');
+        setTimeout(fetchSignals, 8000);
+        return;
+      }
       setSignals(data.signals || []);
       setIsLive(true);
+      setError('');
       setLastScan(new Date().toLocaleTimeString('en-IN', {
         timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true,
       }));
