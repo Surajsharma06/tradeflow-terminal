@@ -1,0 +1,20 @@
+{
+  "name": "TradeFlow Terminal",
+  "short_name": "TradeFlow",
+  "description": "AI-powered forex & stock trading signals",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#06080d",
+  "theme_color": "#388bfd",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "lang": "en"
+}
