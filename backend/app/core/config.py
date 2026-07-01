@@ -110,7 +110,7 @@ class Settings(BaseSettings):
         "https://*.netlify.app",
         "https://*.vercel.app",
     ]
-    cors_allow_all: bool = False
+    cors_allow_all: bool = True
 
     @field_validator("log_level")
     @classmethod
