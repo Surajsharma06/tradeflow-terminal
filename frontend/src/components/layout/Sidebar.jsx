@@ -11,9 +11,9 @@ import {
   X,
   Wifi,
   WifiOff,
-  TrendingUp,
   Globe,
 } from 'lucide-react';
+import { LogoMark } from '../common/Logo';
 
 const NAV_ITEMS = [
   { to: '/',          icon: LayoutDashboard, label: 'Dashboard' },
@@ -77,13 +77,13 @@ function SidebarContents({ collapsed, onClose }) {
     <>
       {/* Logo area */}
       <div className={`flex items-center h-14 border-b border-border/30 ${collapsed ? 'justify-center px-2' : 'px-4 gap-3'}`}>
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-accent to-purple shadow-lg shadow-accent/20 flex-shrink-0">
-          <TrendingUp size={18} className="text-white" />
+        <div className="flex-shrink-0 shadow-lg shadow-accent/20 rounded-lg">
+          <LogoMark size={36} />
         </div>
         {!collapsed && (
           <div className="flex flex-col overflow-hidden flex-1">
             <span className="text-sm font-bold text-text-primary tracking-tight leading-tight">TradeFlow</span>
-            <span className="text-[9px] font-semibold text-accent uppercase tracking-widest">Terminal v2.0</span>
+            <span className="text-[9px] font-semibold text-accent uppercase tracking-widest">Terminal v3.0</span>
           </div>
         )}
         {/* Mobile close button — 44x44 tap target */}

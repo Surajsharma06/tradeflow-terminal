@@ -1,7 +1,8 @@
 {
-  "name": "frontend",
+  "name": "tradeflow-terminal",
+  "description": "TradeFlow 3.0 — AI-powered trading terminal",
   "private": true,
-  "version": "0.0.0",
+  "version": "3.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,7 +1,7 @@
 {
-  "name": "TradeFlow Terminal",
-  "short_name": "TradeFlow",
-  "description": "AI-powered forex & stock trading signals",
+  "name": "TradeFlow 3.0 Terminal",
+  "short_name": "TradeFlow 3.0",
+  "description": "AI-powered forex & stock trading signals — disciplined, transparent, backtested",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

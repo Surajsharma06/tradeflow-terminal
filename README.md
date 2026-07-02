@@ -1,4 +1,4 @@
-# 📈 AI-Powered Automated Trading System
+# 📈 TradeFlow 3.0 — AI-Powered Trading Terminal
 
 > **A professional-grade, multi-market automated trading platform with AI/ML-powered signal generation, hedge fund-grade risk management, and a stunning dark trading terminal dashboard.**
 

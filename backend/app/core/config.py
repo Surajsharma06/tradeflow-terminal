@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     )
 
     # ── Application ──────────────────────────────────────────────────
-    app_name: str = "Trading System API"
-    app_version: str = "1.0.0"
+    app_name: str = "TradeFlow 3.0 API"
+    app_version: str = "3.0.0"
     debug: bool = False
     environment: str = "development"
     timezone: str = "Asia/Kolkata"
