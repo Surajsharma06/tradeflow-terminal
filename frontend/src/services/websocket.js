@@ -12,8 +12,16 @@ const WS_STATES = {
   ERROR: 'ERROR',
 };
 
+const _backendUrl = import.meta.env.VITE_API_URL || '';
+const _wsBase = _backendUrl
+  ? _backendUrl.replace(/^http/, 'ws')
+  : (typeof window !== 'undefined'
+      ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`
+      : 'ws://localhost:8000');
+const _defaultWsUrl = `${_wsBase}/ws/prices`;
+
 class WebSocketManager {
-  constructor(url = 'ws://localhost:8000/api/v1/ws/prices') {
+  constructor(url = _defaultWsUrl) {
     this.url = url;
     this.ws = null;
     this.status = WS_STATES.DISCONNECTED;
