@@ -8,6 +8,7 @@ import BacktestPage from './pages/BacktestPage';
 import ToolsPage from './pages/ToolsPage';
 import SettingsPage from './pages/SettingsPage';
 import ForexPage from './pages/ForexPage';
+import LipschutzPage from './pages/LipschutzPage';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -16,6 +17,7 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><DashboardPage /></PageTransition>} />
         <Route path="/forex" element={<PageTransition><ForexPage /></PageTransition>} />
+        <Route path="/discipline" element={<PageTransition><LipschutzPage /></PageTransition>} />
         <Route path="/analytics" element={<PageTransition><AnalyticsPage /></PageTransition>} />
         <Route path="/backtest" element={<PageTransition><BacktestPage /></PageTransition>} />
         <Route path="/tools" element={<PageTransition><ToolsPage /></PageTransition>} />
