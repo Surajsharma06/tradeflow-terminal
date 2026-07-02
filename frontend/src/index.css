@@ -398,3 +398,37 @@
 @media (max-width: 768px) {
   :root { --spacing-panel: 8px; }
 }
+
+/* ================================================================
+   ACCESSIBILITY — focus rings & reduced motion (TradeFlow 3.0)
+   ================================================================ */
+
+/* Visible keyboard focus ring on all interactive elements */
+:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Respect prefers-reduced-motion for CSS animations
+   (framer-motion handles its own via MotionConfig) */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-tape,
+  .shimmer,
+  .status-dot-live,
+  .animate-pulse,
+  .animate-fade-in {
+    animation: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

@@ -1,5 +1,7 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { MotionConfig, AnimatePresence } from 'framer-motion';
 import Layout from './components/layout/Layout';
+import PageTransition from './components/common/PageTransition';
 import DashboardPage from './pages/DashboardPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import BacktestPage from './pages/BacktestPage';
@@ -7,19 +9,32 @@ import ToolsPage from './pages/ToolsPage';
 import SettingsPage from './pages/SettingsPage';
 import ForexPage from './pages/ForexPage';
 
+function AnimatedRoutes() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<PageTransition><DashboardPage /></PageTransition>} />
+        <Route path="/forex" element={<PageTransition><ForexPage /></PageTransition>} />
+        <Route path="/analytics" element={<PageTransition><AnalyticsPage /></PageTransition>} />
+        <Route path="/backtest" element={<PageTransition><BacktestPage /></PageTransition>} />
+        <Route path="/tools" element={<PageTransition><ToolsPage /></PageTransition>} />
+        <Route path="/settings" element={<PageTransition><SettingsPage /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
 export default function App() {
   return (
-    <BrowserRouter>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/forex" element={<ForexPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/backtest" element={<BacktestPage />} />
-          <Route path="/tools" element={<ToolsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Routes>
-      </Layout>
-    </BrowserRouter>
+    // reducedMotion="user" disables/simplifies all framer-motion
+    // animations for users with prefers-reduced-motion enabled.
+    <MotionConfig reducedMotion="user">
+      <BrowserRouter>
+        <Layout>
+          <AnimatedRoutes />
+        </Layout>
+      </BrowserRouter>
+    </MotionConfig>
   );
 }
