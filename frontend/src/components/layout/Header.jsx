@@ -12,9 +12,13 @@ import {
   Moon,
   Menu,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 import useThemeStore from '../../stores/themeStore';
 import useCurrencyStore from '../../stores/currencyStore';
+import useNotificationStore from '../../stores/notificationStore';
+import NotificationsMenu from './NotificationsMenu';
+import SearchModal from './SearchModal';
 
 // ── Mock ticker data ──────────────────────────────────────────────
 const generateSparklineData = (trend = 'up', points = 20) => {
@@ -32,15 +36,17 @@ const generateSparklineData = (trend = 'up', points = 20) => {
   return data;
 };
 
+// Prices are numeric and tagged with their native currency so the
+// currency switcher can convert them into whatever the user selects.
 const TICKER_DATA = [
-  { symbol: 'NIFTY 50',  price: '24,832.50', change: '+1.23%', positive: true,  currency: '₹',  sparkline: generateSparklineData('up') },
-  { symbol: 'SENSEX',    price: '81,765.30', change: '+1.08%', positive: true,  currency: '₹',  sparkline: generateSparklineData('up') },
-  { symbol: 'NIFTY BANK',price: '53,412.80', change: '-0.34%', positive: false, currency: '₹',  sparkline: generateSparklineData('down') },
-  { symbol: 'S&P 500',   price:  '5,942.18', change: '+0.67%', positive: true,  currency: '$',  sparkline: generateSparklineData('up') },
-  { symbol: 'NASDAQ',    price: '19,218.45', change: '+1.12%', positive: true,  currency: '$',  sparkline: generateSparklineData('up') },
-  { symbol: 'BTC/USDT',  price:'108,432.50', change: '+2.34%', positive: true,  currency: '$',  sparkline: generateSparklineData('up') },
-  { symbol: 'ETH/USDT',  price:  '3,892.15', change: '-0.87%', positive: false, currency: '$',  sparkline: generateSparklineData('down') },
-  { symbol: 'GOLD',      price:  '2,718.40', change: '+0.42%', positive: true,  currency: '$',  sparkline: generateSparklineData('up') },
+  { symbol: 'NIFTY 50',   price: 24832.50,  native: 'INR', decimals: 2, change: '+1.23%', positive: true,  sparkline: generateSparklineData('up') },
+  { symbol: 'SENSEX',     price: 81765.30,  native: 'INR', decimals: 2, change: '+1.08%', positive: true,  sparkline: generateSparklineData('up') },
+  { symbol: 'NIFTY BANK', price: 53412.80,  native: 'INR', decimals: 2, change: '-0.34%', positive: false, sparkline: generateSparklineData('down') },
+  { symbol: 'S&P 500',    price: 5942.18,   native: 'USD', decimals: 2, change: '+0.67%', positive: true,  sparkline: generateSparklineData('up') },
+  { symbol: 'NASDAQ',     price: 19218.45,  native: 'USD', decimals: 2, change: '+1.12%', positive: true,  sparkline: generateSparklineData('up') },
+  { symbol: 'BTC/USDT',   price: 108432.50, native: 'USD', decimals: 0, change: '+2.34%', positive: true,  sparkline: generateSparklineData('up') },
+  { symbol: 'ETH/USDT',   price: 3892.15,   native: 'USD', decimals: 2, change: '-0.87%', positive: false, sparkline: generateSparklineData('down') },
+  { symbol: 'GOLD',       price: 2718.40,   native: 'USD', decimals: 2, change: '+0.42%', positive: true,  sparkline: generateSparklineData('up') },
 ];
 
 const VIX_DATA = [
@@ -78,6 +84,10 @@ function MiniSparkline({ data, positive, width = 56, height = 20 }) {
 }
 
 function TickerItem({ item }) {
+  // Subscribing to `currency` ensures re-render when the user switches;
+  // formatFrom converts from the asset's native currency.
+  useCurrencyStore((s) => s.currency);
+  const formatFrom = useCurrencyStore((s) => s.formatFrom);
   return (
     <div className="flex items-center gap-3 px-5 py-1.5 border-r border-border/40 flex-shrink-0 group cursor-default">
       <div className="flex flex-col">
@@ -86,7 +96,7 @@ function TickerItem({ item }) {
         </span>
         <div className="flex items-center gap-2">
           <span className="font-tabular text-sm font-semibold text-text-primary">
-            {item.currency}{item.price}
+            {formatFrom(item.price, item.native, item.decimals)}
           </span>
           <span className={`font-tabular text-xs font-medium ${item.positive ? 'text-positive' : 'text-negative'}`}>
             {item.change}
@@ -164,15 +174,23 @@ function TimeDisplay() {
 function CurrencySwitcher() {
   const { currency, setCurrency } = useCurrencyStore();
   return (
-    <div className="hidden sm:flex items-center gap-0.5 rounded-lg bg-surface p-0.5 border border-border/50">
+    <div
+      role="group"
+      aria-label="Display currency"
+      className="flex items-center gap-0.5 rounded-lg bg-surface p-0.5 border border-border/50"
+    >
       {['USD', 'INR', 'CAD'].map(c => (
-        <button
+        <motion.button
           key={c}
+          whileTap={{ scale: 0.94 }}
           onClick={() => setCurrency(c)}
-          className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
-            currency === c ? 'bg-accent text-white shadow-sm' : 'text-text-secondary hover:text-text-primary'
+          aria-pressed={currency === c}
+          className={`px-2 py-1 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+            currency === c
+              ? 'bg-accent text-white shadow-sm'
+              : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
           }`}
-        >{c}</button>
+        >{c}</motion.button>
       ))}
     </div>
   );
@@ -182,13 +200,15 @@ function CurrencySwitcher() {
 function ThemeToggle() {
   const { theme, toggle } = useThemeStore();
   return (
-    <button
+    <motion.button
+      whileTap={{ scale: 0.9 }}
       onClick={toggle}
       className="p-1.5 rounded-md hover:bg-surface-hover transition-colors text-text-secondary hover:text-text-primary cursor-pointer"
+      aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
       title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-    </button>
+    </motion.button>
   );
 }
 
@@ -197,26 +217,46 @@ function ThemeToggle() {
 // ══════════════════════════════════════════════════════════════════
 export default function Header() {
   const tickerRef = useRef(null);
+  const bellRef = useRef(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const { theme, init } = useThemeStore();
+  const notifications = useNotificationStore((s) => s.notifications);
+  const readIds = useNotificationStore((s) => s.readIds);
+  const unread = notifications.filter((n) => !readIds.includes(n.id)).length;
 
   useEffect(() => { init(theme); }, []);
+
+  // Global Cmd+K / Ctrl+K opens search
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen((o) => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const tickerItems = [...TICKER_DATA, ...TICKER_DATA];
 
   return (
     <header className="w-full bg-bg-alt/80 backdrop-blur-xl border-b border-border/60 z-50 select-none">
       {/* ── Top info bar ── */}
-      <div className="flex items-center justify-between px-3 h-9 border-b border-border/30">
+      <div className="flex items-center justify-between px-3 h-12 md:h-9 border-b border-border/30">
         {/* Left: Mobile hamburger + Market statuses */}
         <div className="flex items-center gap-2">
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden p-1.5 rounded-md hover:bg-surface-hover transition-colors text-text-secondary cursor-pointer"
+          {/* Mobile hamburger — 44x44 minimum tap target */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="md:hidden flex items-center justify-center min-w-[44px] min-h-[44px] -ml-2 rounded-md hover:bg-surface-hover active:bg-surface-active transition-colors text-text-primary cursor-pointer"
             onClick={() => window.dispatchEvent(new Event('sidebar-toggle'))}
+            aria-label="Open navigation menu"
           >
-            <Menu size={16} />
-          </button>
+            <Menu size={22} />
+          </motion.button>
           <div className="hidden sm:flex items-center gap-2">
             {MARKET_STATUS.map((m) => (
               <MarketBadge key={m.market} market={m.market} open={m.open} />
@@ -237,15 +277,42 @@ export default function Header() {
           <div className="hidden sm:block w-px h-4 bg-border/40 mx-0.5" />
           <TimeDisplay />
           <div className="w-px h-4 bg-border/40 mx-0.5" />
-          <button className="p-1.5 rounded-md hover:bg-surface-hover transition-colors text-text-secondary hover:text-text-primary cursor-pointer">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setSearchOpen(true)}
+            className="p-1.5 rounded-md hover:bg-surface-hover transition-colors text-text-secondary hover:text-text-primary cursor-pointer"
+            aria-label="Search (Cmd+K)"
+            title="Search (⌘K)"
+          >
             <Search size={14} />
-          </button>
-          <button className="p-1.5 rounded-md hover:bg-surface-hover transition-colors text-text-secondary hover:text-text-primary relative cursor-pointer">
-            <Bell size={14} />
-            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-negative" />
-          </button>
+          </motion.button>
+
+          {/* Notification bell + dropdown */}
+          <div className="relative">
+            <motion.button
+              ref={bellRef}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setNotifOpen((o) => !o)}
+              className="p-1.5 rounded-md hover:bg-surface-hover transition-colors text-text-secondary hover:text-text-primary relative cursor-pointer"
+              aria-label={`Notifications${unread ? ` (${unread} unread)` : ''}`}
+              aria-expanded={notifOpen}
+            >
+              <Bell size={14} />
+              {unread > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 flex items-center justify-center rounded-full bg-negative text-white text-[8px] font-bold leading-none">
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+            </motion.button>
+            <NotificationsMenu
+              open={notifOpen}
+              onClose={() => setNotifOpen(false)}
+              anchorRef={bellRef}
+            />
+          </div>
+
           <ThemeToggle />
-          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-positive-subtle/60">
+          <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-md bg-positive-subtle/60">
             <Wifi size={11} className="text-positive" />
             <span className="text-[10px] font-semibold text-positive">LIVE</span>
           </div>
@@ -270,6 +337,9 @@ export default function Header() {
           ))}
         </div>
       </div>
+
+      {/* ── Search modal (portal-level) ── */}
+      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 }

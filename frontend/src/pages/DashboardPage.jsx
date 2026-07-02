@@ -4,20 +4,24 @@ import {
   DollarSign, AlertTriangle, Clock, ArrowUpRight, ArrowDownRight,
   ThumbsUp, ThumbsDown, CheckCircle2, XCircle, RefreshCw,
 } from 'lucide-react';
+import useCurrencyStore from '../stores/currencyStore';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA
 // ─────────────────────────────────────────────────────────────────────────────
 
+// `native` is the currency the price is quoted in; the header currency
+// switcher converts it to the user's selected display currency.
+// EUR/USD is a rate, not a money amount, so it is never converted.
 const MARKETS = [
-  { name: 'NIFTY 50',   price: 24832.50, change:  1.23, currency: '₹', flag: '🇮🇳', label: 'NSE' },
-  { name: 'SENSEX',     price: 81765.30, change:  1.08, currency: '₹', flag: '🇮🇳', label: 'BSE' },
-  { name: 'NIFTY BANK', price: 53412.80, change: -0.34, currency: '₹', flag: '🇮🇳', label: 'BANK' },
-  { name: 'S&P 500',    price:  5942.18, change:  0.67, currency: '$', flag: '🇺🇸', label: 'NYSE' },
-  { name: 'NASDAQ',     price: 19218.45, change:  1.12, currency: '$', flag: '🇺🇸', label: 'NSDQ' },
-  { name: 'BTC/USDT',   price: 108432,   change:  2.34, currency: '$', flag: '₿',   label: 'CRPT' },
-  { name: 'EUR/USD',    price:   1.1352, change: -0.41, currency: '',  flag: '💱',   label: 'FX'  },
-  { name: 'GOLD',       price:  3350.40, change:  0.82, currency: '$', flag: '🥇',   label: 'XAU' },
+  { name: 'NIFTY 50',   price: 24832.50, change:  1.23, native: 'INR', flag: '🇮🇳', label: 'NSE' },
+  { name: 'SENSEX',     price: 81765.30, change:  1.08, native: 'INR', flag: '🇮🇳', label: 'BSE' },
+  { name: 'NIFTY BANK', price: 53412.80, change: -0.34, native: 'INR', flag: '🇮🇳', label: 'BANK' },
+  { name: 'S&P 500',    price:  5942.18, change:  0.67, native: 'USD', flag: '🇺🇸', label: 'NYSE' },
+  { name: 'NASDAQ',     price: 19218.45, change:  1.12, native: 'USD', flag: '🇺🇸', label: 'NSDQ' },
+  { name: 'BTC/USDT',   price: 108432,   change:  2.34, native: 'USD', flag: '₿',   label: 'CRPT' },
+  { name: 'EUR/USD',    price:   1.1352, change: -0.41, native: null,  flag: '💱',   label: 'FX'  },
+  { name: 'GOLD',       price:  3350.40, change:  0.82, native: 'USD', flag: '🥇',   label: 'XAU' },
 ];
 
 const INITIAL_SIGNALS = [
@@ -95,6 +99,11 @@ function Sparkline({ positive }) {
 // Market card — emoji flag restored, cleaner layout
 function MarketCard({ item, animated }) {
   const up = item.change >= 0;
+  useCurrencyStore((s) => s.currency); // re-render on currency switch
+  const formatFrom = useCurrencyStore((s) => s.formatFrom);
+  const priceLabel = item.native
+    ? formatFrom(item.price, item.native, item.price > 1000 ? 2 : 2)
+    : item.price.toFixed(4); // FX rate — not a money amount
   return (
     <div
       className={`glass-card p-3 cursor-default group hover:border-border-light transition-all duration-300 ${
@@ -113,10 +122,7 @@ function MarketCard({ item, animated }) {
       <div className="text-[10px] font-medium text-text-secondary truncate mb-0.5">{item.name}</div>
       {/* Price */}
       <div className="font-mono text-sm font-bold text-text-primary">
-        {item.currency}
-        {item.price > 1000
-          ? item.price.toLocaleString('en-IN')
-          : item.price.toFixed(item.price < 10 ? 4 : 2)}
+        {priceLabel}
       </div>
       {/* Change */}
       <div className={`flex items-center gap-0.5 text-[11px] font-semibold mt-0.5 ${up ? 'text-positive' : 'text-negative'}`}>
@@ -354,6 +360,8 @@ export default function DashboardPage() {
   const [time,     setTime]     = useState('');
   const [signals,  setSignals]  = useState(INITIAL_SIGNALS);
   const riskVal = 38;
+  useCurrencyStore((s) => s.currency); // re-render on currency switch
+  const fmtMoney = useCurrencyStore((s) => s.format);
 
   useEffect(() => {
     const id = setTimeout(() => setMounted(true), 60);
@@ -547,7 +555,7 @@ export default function DashboardPage() {
                     <td className="py-2.5 pr-4 font-mono text-text-secondary">{p.entry}</td>
                     <td className="py-2.5 pr-4 font-mono text-text-primary">{p.cur}</td>
                     <td className={`py-2.5 pr-4 font-mono font-bold ${pos ? 'text-positive' : 'text-negative'}`}>
-                      {pos ? '+' : ''}${p.pnl}
+                      {pos ? '+' : ''}{fmtMoney(p.pnl)}
                     </td>
                     <td className="py-2.5 font-mono text-text-secondary">{p.risk}%</td>
                   </tr>

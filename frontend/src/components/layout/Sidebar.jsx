@@ -86,10 +86,14 @@ function SidebarContents({ collapsed, onClose }) {
             <span className="text-[9px] font-semibold text-accent uppercase tracking-widest">Terminal v2.0</span>
           </div>
         )}
-        {/* Mobile close button */}
+        {/* Mobile close button — 44x44 tap target */}
         {onClose && (
-          <button onClick={onClose} className="md:hidden p-1 rounded-md hover:bg-surface-hover text-text-secondary cursor-pointer">
-            <X size={16} />
+          <button
+            onClick={onClose}
+            className="md:hidden flex items-center justify-center min-w-[44px] min-h-[44px] -mr-2 rounded-md hover:bg-surface-hover text-text-secondary cursor-pointer"
+            aria-label="Close navigation menu"
+          >
+            <X size={20} />
           </button>
         )}
       </div>
@@ -169,6 +173,19 @@ export default function Sidebar() {
     window.addEventListener('sidebar-toggle', handler);
     return () => window.removeEventListener('sidebar-toggle', handler);
   }, []);
+
+  // Lock body scroll while the mobile drawer is open, close on Escape.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => { if (e.key === 'Escape') setMobileOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [mobileOpen]);
 
   return (
     <>
