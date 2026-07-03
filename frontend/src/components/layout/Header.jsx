@@ -187,7 +187,7 @@ function CurrencySwitcher() {
           aria-pressed={currency === c}
           className={`px-2 py-1 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
             currency === c
-              ? 'bg-accent text-white shadow-sm'
+              ? 'badge-gradient text-white shadow-sm'
               : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
           }`}
         >{c}</motion.button>

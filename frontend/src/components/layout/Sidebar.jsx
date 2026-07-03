@@ -111,7 +111,7 @@ function SidebarContents({ collapsed, onClose }) {
             className={({ isActive }) =>
               `group relative flex items-center ${collapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-lg transition-all duration-200 ${
                 isActive
-                  ? 'bg-accent-subtle text-accent'
+                  ? 'nav-active text-accent'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
               }`
             }
@@ -130,7 +130,7 @@ function SidebarContents({ collapsed, onClose }) {
                   </span>
                 )}
                 {!collapsed && item.badge && (
-                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-accent text-white tracking-wider">
+                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full badge-gradient text-white tracking-wider">
                     {item.badge}
                   </span>
                 )}

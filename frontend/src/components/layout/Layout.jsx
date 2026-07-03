@@ -8,7 +8,9 @@ import Sidebar from './Sidebar';
 // ══════════════════════════════════════════════════════════════════
 export default function Layout({ children }) {
   return (
-    <div className="h-screen w-screen overflow-hidden bg-bg flex flex-col">
+    // app-bg paints the ambient gradient blobs once on this
+    // non-scrolling shell; children stay transparent above it.
+    <div className="h-screen w-screen overflow-hidden app-bg flex flex-col">
       {/* ── Header (full-width top bar) ── */}
       <Header />
 
@@ -17,7 +19,7 @@ export default function Layout({ children }) {
         <Sidebar />
 
         {/* ── Main content area ── */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 bg-bg">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4">
           <div className="max-w-[1800px] mx-auto animate-fade-in">
             {children}
           </div>

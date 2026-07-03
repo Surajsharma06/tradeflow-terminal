@@ -187,7 +187,7 @@ function BacktestPanel() {
           whileTap={{ scale: 0.96 }}
           onClick={run}
           disabled={running}
-          className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 btn-gradient disabled:opacity-50 text-white text-xs font-semibold px-4 py-1.5 rounded-lg cursor-pointer"
         >
           <RefreshCw size={12} className={running ? 'animate-spin' : ''} />
           {running ? 'Running…' : 'Run backtest'}
