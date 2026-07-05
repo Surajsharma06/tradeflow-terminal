@@ -19,7 +19,7 @@ import { LogoMark } from '../common/Logo';
 const NAV_ITEMS = [
   { to: '/',           icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/forex',      icon: Globe,           label: 'Forex' },
-  { to: '/discipline', icon: ShieldCheck,     label: 'Discipline', badge: 'NEW' },
+  { to: '/discipline', icon: ShieldCheck,     label: 'Legends', badge: 'NEW' },
   { to: '/analytics',  icon: BarChart3,        label: 'Analytics' },
   { to: '/backtest',   icon: FlaskConical,     label: 'Backtest'  },
   { to: '/tools',      icon: Wrench,           label: 'Tools'     },

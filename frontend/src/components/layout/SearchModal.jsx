@@ -10,7 +10,7 @@ import {
 const PAGES = [
   { type: 'page', label: 'Dashboard',  to: '/',          icon: LayoutDashboard, hint: 'Market overview & signals' },
   { type: 'page', label: 'Forex',      to: '/forex',     icon: Globe,           hint: 'ICT/SMC forex intelligence' },
-  { type: 'page', label: 'Discipline', to: '/discipline', icon: ShieldCheck,    hint: 'Rules-based signals, risk-first' },
+  { type: 'page', label: 'Legends',    to: '/discipline', icon: ShieldCheck,    hint: 'Eight legendary traders, regime-gated' },
   { type: 'page', label: 'Analytics',  to: '/analytics', icon: BarChart3,       hint: 'Performance & equity curve' },
   { type: 'page', label: 'Backtest',   to: '/backtest',  icon: FlaskConical,    hint: 'Strategy backtesting' },
   { type: 'page', label: 'Tools',      to: '/tools',     icon: Wrench,          hint: 'Position size & charges' },

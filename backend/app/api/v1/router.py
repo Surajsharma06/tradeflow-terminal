@@ -12,6 +12,7 @@ from app.api.v1.endpoints import (
     backtest,
     backtest_forex,
     journal,
+    legends,
     lipschutz,
     market_data,
     orderbook,
@@ -27,6 +28,12 @@ api_router.include_router(
     lipschutz.router,
     prefix="/lipschutz",
     tags=["Lipschutz Mode"],
+)
+
+api_router.include_router(
+    legends.router,
+    prefix="/legends",
+    tags=["Legends Mode"],
 )
 
 api_router.include_router(

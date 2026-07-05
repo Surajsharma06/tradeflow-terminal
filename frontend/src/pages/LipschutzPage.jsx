@@ -2,35 +2,26 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Shield, Zap, RefreshCw, AlertTriangle, TrendingUp, TrendingDown,
-  ChevronDown, ChevronUp, FlaskConical, Scale, BookOpen,
+  ChevronDown, ChevronUp, FlaskConical, Scale, BookOpen, Users,
+  Crown, PauseCircle, Activity,
 } from 'lucide-react';
 import { API } from '../lib/api';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Demo fallback (shown when backend is unreachable) — clearly labelled.
-// ─────────────────────────────────────────────────────────────────────────────
-const DEMO_SIGNALS = [
-  {
-    pair: 'EUR/USD', direction: 'BUY', entry: 1.13520, stop_loss: 1.13140,
-    take_profit: 1.14090, risk_reward: 1.5, rsi: 44.2, atr: 0.00253,
-    strategy: 'EMA trend + RSI pullback + ATR stops', timeframe: '1H',
-    reasons: [
-      'Uptrend filter: EMA20 (1.13310) above EMA50 (1.12980)',
-      'Price 1.13520 trading above EMA20',
-      'RSI(14) pullback: dipped below 40 within last 5 bars (min 36.8), now recovered to 44.2',
-      'Volatility stop: 1.5×ATR(14) = 0.00380',
-    ],
-    position: { units: 26315.79, risk_amount: 100, risk_pct: 1.0, stop_distance_pips: 38 },
-  },
-];
 
 const fadeUp = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
 };
 
+const REGIME_STYLE = {
+  TRENDING_UP:   { label: 'Trending ↑', cls: 'bg-positive-subtle text-positive' },
+  TRENDING_DOWN: { label: 'Trending ↓', cls: 'bg-negative-subtle text-negative' },
+  RANGING:       { label: 'Ranging',    cls: 'bg-info-subtle text-info' },
+  CHOPPY:        { label: 'Choppy — sit out', cls: 'bg-warning-subtle text-warning' },
+  NO_DATA:       { label: 'No data',    cls: 'bg-surface-hover text-text-tertiary' },
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Signal card — shows WHY the signal fired, not just buy/sell
+// Signal card — trader attribution + full reasoning
 // ─────────────────────────────────────────────────────────────────────────────
 function SignalCard({ sig, idx }) {
   const [expanded, setExpanded] = useState(idx === 0);
@@ -42,34 +33,33 @@ function SignalCard({ sig, idx }) {
       transition={{ delay: idx * 0.06, duration: 0.25 }}
       className="glass-card overflow-hidden"
     >
-      {/* Header row */}
-      <div className="flex items-center gap-3 p-4">
+      <div className="flex items-center gap-3 p-4 flex-wrap">
         <span className={`flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex-shrink-0
           ${isBuy ? 'bg-positive-subtle text-positive' : 'bg-negative-subtle text-negative'}`}>
           {isBuy ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
           {sig.direction}
         </span>
         <div className="flex-1 min-w-0">
-          <div className="font-mono text-base font-bold text-text-primary">{sig.pair}</div>
-          <div className="text-[10px] text-text-tertiary truncate">{sig.strategy} · {sig.timeframe}</div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono text-base font-bold text-text-primary">{sig.pair}</span>
+            {sig.conviction === 'HIGH' && (
+              <span className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full badge-gradient text-white">
+                <Crown size={9} /> HIGH CONVICTION ×{sig.confluence}
+              </span>
+            )}
+          </div>
+          <div className="text-[10px] text-text-tertiary truncate mt-0.5">
+            <span className="text-purple font-semibold">{sig.trader}</span> — {sig.rule}
+          </div>
         </div>
         <div className="hidden sm:flex items-center gap-4 flex-shrink-0">
-          <div className="text-right">
-            <div className="text-[9px] text-text-muted uppercase tracking-wider">Entry</div>
-            <div className="font-mono text-xs text-text-primary">{sig.entry}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-[9px] text-negative uppercase tracking-wider">Stop</div>
-            <div className="font-mono text-xs text-negative">{sig.stop_loss}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-[9px] text-positive uppercase tracking-wider">Target</div>
-            <div className="font-mono text-xs text-positive">{sig.take_profit}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-[9px] text-text-muted uppercase tracking-wider">R:R</div>
-            <div className="font-mono text-xs font-bold text-accent">1:{sig.risk_reward}</div>
-          </div>
+          {[['Entry', sig.entry, 'text-text-primary'], ['Stop', sig.stop_loss, 'text-negative'],
+            ['Target', sig.take_profit, 'text-positive'], ['R:R', `1:${sig.risk_reward}`, 'text-accent']].map(([l, v, c]) => (
+            <div key={l} className="text-right">
+              <div className="text-[9px] text-text-muted uppercase tracking-wider">{l}</div>
+              <div className={`font-mono text-xs ${c}`}>{v}</div>
+            </div>
+          ))}
         </div>
         <button
           onClick={() => setExpanded((e) => !e)}
@@ -81,10 +71,8 @@ function SignalCard({ sig, idx }) {
         </button>
       </div>
 
-      {/* Why this fired */}
       {expanded && (
         <div className="px-4 pb-4 space-y-3">
-          {/* Mobile: entry/sl/tp */}
           <div className="sm:hidden grid grid-cols-4 gap-2 text-center">
             {[['Entry', sig.entry, 'text-text-primary'], ['Stop', sig.stop_loss, 'text-negative'],
               ['Target', sig.take_profit, 'text-positive'], ['R:R', `1:${sig.risk_reward}`, 'text-accent']].map(([l, v, c]) => (
@@ -101,6 +89,11 @@ function SignalCard({ sig, idx }) {
               <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
                 Why this signal fired
               </span>
+              {sig.agreeing_legends?.length > 1 && (
+                <span className="text-[9px] text-purple">
+                  ({sig.agreeing_legends.join(' + ')})
+                </span>
+              )}
             </div>
             <ul className="space-y-1.5">
               {sig.reasons.map((r, i) => (
@@ -112,18 +105,23 @@ function SignalCard({ sig, idx }) {
             </ul>
           </div>
 
-          {/* Position sizing */}
-          {sig.position && (
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg bg-accent-subtle/40 border border-accent/20 px-3 py-2">
-              <div className="flex items-center gap-1.5">
-                <Scale size={12} className="text-accent" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-accent">Suggested size</span>
-              </div>
-              <span className="font-mono text-[11px] text-text-primary">{Number(sig.position.units).toLocaleString()} units</span>
-              <span className="font-mono text-[11px] text-text-secondary">risking ${sig.position.risk_amount} ({sig.position.risk_pct}%)</span>
-              <span className="font-mono text-[11px] text-text-secondary">{sig.position.stop_distance_pips} pip stop</span>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg bg-accent-subtle/40 border border-accent/20 px-3 py-2">
+            <div className="flex items-center gap-1.5">
+              <Scale size={12} className="text-accent" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-accent">Risk plan</span>
             </div>
-          )}
+            {sig.position && (
+              <>
+                <span className="font-mono text-[11px] text-text-primary">
+                  {Number(sig.position.units).toLocaleString()} units
+                </span>
+                <span className="font-mono text-[11px] text-text-secondary">
+                  risking {sig.risk_pct_used}% (${sig.position.risk_amount})
+                </span>
+              </>
+            )}
+            <span className="text-[10px] text-text-secondary">{sig.trailing?.note}</span>
+          </div>
         </div>
       )}
     </motion.div>
@@ -131,7 +129,105 @@ function SignalCard({ sig, idx }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Backtest panel
+// Market status board — regime + edge gate per pair
+// ─────────────────────────────────────────────────────────────────────────────
+function MarketBoard({ regimes, edges }) {
+  const pairs = Object.keys(regimes ?? {});
+  if (!pairs.length) return null;
+  return (
+    <div className="glass-card p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Activity size={14} className="text-cyan" />
+        <span className="text-sm font-semibold text-text-primary">Market Read</span>
+        <span className="text-[10px] text-text-muted bg-surface px-2 py-0.5 rounded-full">
+          regime + trailing edge per pair
+        </span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        {pairs.map((p) => {
+          const reg = regimes[p];
+          const edge = edges?.[p];
+          const style = REGIME_STYLE[reg.regime] ?? REGIME_STYLE.NO_DATA;
+          const gated = edge && !edge.has_edge;
+          return (
+            <div key={p} className={`rounded-lg border p-2.5 ${gated ? 'border-warning/30 bg-warning-subtle/20' : 'border-border/40 bg-surface/40'}`}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-xs font-bold text-text-primary">{p}</span>
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${style.cls}`}>
+                  {style.label}
+                </span>
+              </div>
+              {gated ? (
+                <div className="flex items-start gap-1.5 mt-1.5 text-[10px] text-warning leading-snug">
+                  <PauseCircle size={11} className="flex-shrink-0 mt-0.5" />
+                  Standing aside — trailing PF {edge.trailing_profit_factor} over {edge.trailing_trades} trades. No edge, no trade.
+                </div>
+              ) : (
+                <div className="text-[10px] text-text-tertiary mt-1.5 leading-snug">
+                  {reg.detail}
+                  {edge?.has_edge && (
+                    <span className="text-positive"> · edge OK (PF {edge.trailing_profit_factor})</span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legends roster
+// ─────────────────────────────────────────────────────────────────────────────
+function Roster() {
+  const [roster, setRoster] = useState(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API}/api/v1/legends/traders`)
+      .then((r) => r.json())
+      .then((d) => setRoster(d.roster))
+      .catch(() => setRoster(null));
+  }, []);
+
+  if (!roster) return null;
+  return (
+    <div className="glass-card p-4">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-2 cursor-pointer"
+        aria-expanded={open}
+      >
+        <Users size={14} className="text-gold" />
+        <span className="text-sm font-semibold text-text-primary">The Legends Roster</span>
+        <span className="text-[10px] text-text-muted bg-surface px-2 py-0.5 rounded-full">
+          {roster.length} encoded rule sets
+        </span>
+        <span className="ml-auto text-text-secondary">
+          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </span>
+      </button>
+      {open && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+          {roster.map((t) => (
+            <div key={t.name} className="rounded-lg bg-surface/50 border border-border/40 p-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-text-primary">{t.name}</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-purple-subtle text-purple">{t.tag}</span>
+              </div>
+              <div className="text-[10px] text-text-secondary mt-1 leading-relaxed">{t.rule}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Backtest panel (legends ensemble, per-trader breakdown)
 // ─────────────────────────────────────────────────────────────────────────────
 function BacktestPanel() {
   const [pair, setPair] = useState('EURUSD');
@@ -142,11 +238,11 @@ function BacktestPanel() {
   const run = async () => {
     setRunning(true); setError(null);
     try {
-      const res = await fetch(`${API}/api/v1/lipschutz/backtest?pair=${pair}&days=180`);
+      const res = await fetch(`${API}/api/v1/legends/backtest?pair=${pair}&days=180`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setResult(await res.json());
     } catch (e) {
-      setError(`Backtest unavailable (${e.message}) — start the backend for live results.`);
+      setError(`Backtest unavailable (${e.message}) — backend may be waking up.`);
     } finally {
       setRunning(false);
     }
@@ -165,12 +261,12 @@ function BacktestPanel() {
     <div className="glass-card p-4 space-y-3">
       <div className="flex items-center gap-2">
         <FlaskConical size={14} className="text-purple" />
-        <span className="text-sm font-semibold text-text-primary">Verify the rules yourself</span>
-        <span className="text-[10px] text-text-muted bg-surface px-2 py-0.5 rounded-full">180-day walk-forward</span>
+        <span className="text-sm font-semibold text-text-primary">Verify the legends yourself</span>
+        <span className="text-[10px] text-text-muted bg-surface px-2 py-0.5 rounded-full">180-day ensemble replay</span>
       </div>
       <p className="text-[11px] text-text-secondary leading-relaxed">
-        Don't trust it — test it. This replays the exact same rules bar-by-bar over real
-        historical data. Stats include losses and drawdowns, not cherry-picked wins.
+        Same rules, replayed bar-by-bar on real history — with per-trader and per-regime
+        breakdowns so you can see exactly which legend earns their seat on each pair.
       </p>
       <div className="flex items-center gap-2">
         <select
@@ -179,7 +275,7 @@ function BacktestPanel() {
           className="bg-surface border border-border rounded-lg px-3 py-1.5 text-xs text-text-primary cursor-pointer"
           aria-label="Backtest pair"
         >
-          {['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD'].map((p) => (
+          {['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'NZDUSD'].map((p) => (
             <option key={p} value={p}>{p.slice(0, 3)}/{p.slice(3)}</option>
           ))}
         </select>
@@ -210,7 +306,33 @@ function BacktestPanel() {
               </div>
             ))}
           </div>
-          {/* Equity curve sparkline */}
+
+          {result.by_trader && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-[11px]">
+                <thead>
+                  <tr className="text-text-muted border-b border-border/40">
+                    {['Legend', 'Trades', 'Win %', 'Net R'].map((h) => (
+                      <th key={h} className="text-left pb-1.5 pr-4 font-medium text-[9px] uppercase tracking-wider">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/20">
+                  {Object.entries(result.by_trader).map(([name, b]) => (
+                    <tr key={name}>
+                      <td className="py-1.5 pr-4 font-semibold text-text-primary">{name}</td>
+                      <td className="py-1.5 pr-4 font-mono text-text-secondary">{b.trades}</td>
+                      <td className="py-1.5 pr-4 font-mono text-text-secondary">{b.win_rate_pct}%</td>
+                      <td className={`py-1.5 font-mono font-bold ${b.net_r >= 0 ? 'text-positive' : 'text-negative'}`}>
+                        {b.net_r >= 0 ? '+' : ''}{b.net_r}R
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
           {result.equity_curve?.length > 1 && (
             <svg viewBox="0 0 400 60" className="w-full h-14" preserveAspectRatio="none" aria-label="Equity curve">
               <polyline
@@ -222,7 +344,7 @@ function BacktestPanel() {
                   return `${x},${y}`;
                 }).join(' ')}
                 fill="none"
-                stroke={result.return_pct >= 0 ? '#3fb950' : '#f85149'}
+                stroke={result.return_pct >= 0 ? '#34d764' : '#ff5d55'}
                 strokeWidth="1.5"
               />
             </svg>
@@ -234,32 +356,32 @@ function BacktestPanel() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PAGE
+// PAGE — Legends Mode
 // ─────────────────────────────────────────────────────────────────────────────
 export default function LipschutzPage() {
-  const [signals, setSignals] = useState(null);
-  const [demo, setDemo] = useState(false);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [breaker, setBreaker] = useState(null);
+  const [offline, setOffline] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/v1/lipschutz/signals`);
+      const res = await fetch(`${API}/api/v1/legends/signals`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setSignals(data.signals ?? []);
-      setBreaker(data.circuit_breaker ? data.circuit_breaker_reason : null);
-      setDemo(false);
+      setData(await res.json());
+      setOffline(false);
     } catch {
-      setSignals(DEMO_SIGNALS);
-      setDemo(true);
+      setData(null);
+      setOffline(true);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const signals = data?.signals ?? [];
+  const breaker = data?.circuit_breaker ? data.circuit_breaker_reason : null;
 
   return (
     <div className="p-4 lg:p-5 min-h-screen space-y-4 max-w-[1100px] mx-auto">
@@ -269,16 +391,20 @@ export default function LipschutzPage() {
         <div>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gold-subtle flex items-center justify-center">
-              <Shield size={16} className="text-gold" />
+              <Crown size={16} className="text-gold" />
             </div>
-            <h1 className="text-xl font-bold text-text-primary">Discipline Mode</h1>
-            {demo && (
-              <span className="px-2 py-0.5 rounded-full bg-warning-subtle text-warning text-[9px] font-bold">DEMO DATA</span>
+            <h1 className="text-xl font-bold text-text-primary">Legends Mode</h1>
+            {offline && (
+              <span className="px-2 py-0.5 rounded-full bg-warning-subtle text-warning text-[9px] font-bold">
+                BACKEND WAKING UP
+              </span>
             )}
           </div>
-          <p className="text-xs text-text-secondary mt-1 max-w-[560px] leading-relaxed">
-            Rules-based signals in the spirit of Bill Lipschutz: risk management first,
-            prediction second. Every signal shows exactly why it fired — no black box.
+          <p className="text-xs text-text-secondary mt-1 max-w-[620px] leading-relaxed">
+            Eight legendary traders' documented rules, regime-gated: trend systems trade
+            trends, range systems trade ranges, and when a pair has no trailing edge the
+            engine <strong className="text-text-primary">stands aside</strong>. Every signal
+            shows exactly which legend fired it and why.
           </p>
         </div>
         <motion.button
@@ -294,9 +420,9 @@ export default function LipschutzPage() {
       <motion.div {...fadeUp} transition={{ delay: 0.05, duration: 0.25 }}
         className="glass-card p-3 flex flex-wrap items-center gap-x-6 gap-y-2">
         {[
-          ['Max risk per trade', '1% of equity'],
-          ['Stop-loss', 'Mandatory · 1.5×ATR'],
-          ['Take-profit', 'Fixed 1.5R'],
+          ['Risk per trade', '0.75–1% conviction-sized'],
+          ['Stops', 'Mandatory + Seykota trail'],
+          ['Edge gate', 'No trailing edge → no trade'],
           ['Circuit breaker', '-3% day / -6% week'],
         ].map(([k, v]) => (
           <div key={k} className="flex items-center gap-2">
@@ -307,7 +433,6 @@ export default function LipschutzPage() {
         ))}
       </motion.div>
 
-      {/* Circuit breaker warning */}
       {breaker && (
         <div className="flex items-center gap-2 text-xs text-negative bg-negative-subtle border border-negative/30 rounded-lg px-4 py-3">
           <AlertTriangle size={14} className="flex-shrink-0" />
@@ -315,37 +440,50 @@ export default function LipschutzPage() {
         </div>
       )}
 
+      {/* Market read: regimes + edge gates */}
+      {data && <MarketBoard regimes={data.regimes} edges={data.edges} />}
+
       {/* Signals */}
       <div className="space-y-3">
         {loading ? (
           <div className="glass-card p-8 flex items-center justify-center gap-2 text-text-tertiary text-sm">
-            <RefreshCw size={14} className="animate-spin" /> Scanning pairs against the rule set…
+            <RefreshCw size={14} className="animate-spin" /> Scanning markets against eight legends' rules…
           </div>
-        ) : signals?.length === 0 && !breaker ? (
+        ) : signals.length === 0 && !breaker ? (
           <div className="glass-card p-8 text-center space-y-1">
             <Zap size={18} className="mx-auto text-text-tertiary" />
             <div className="text-sm font-semibold text-text-primary">No setups right now</div>
-            <div className="text-[11px] text-text-secondary">
-              The rules are strict by design — discipline means waiting. Check back later.
+            <div className="text-[11px] text-text-secondary max-w-[420px] mx-auto">
+              {offline
+                ? 'Backend is waking up — refresh in a few seconds.'
+                : 'Livermore rule in effect: when the rules don\'t line up, the position is no position. Patience is the trade.'}
             </div>
           </div>
         ) : (
-          signals?.map((sig, i) => <SignalCard key={`${sig.pair}-${i}`} sig={sig} idx={i} />)
+          signals.map((sig, i) => <SignalCard key={`${sig.pair}-${i}`} sig={sig} idx={i} />)
+        )}
+
+        {data?.suppressed_by_correlation?.length > 0 && (
+          <div className="text-[10px] text-text-tertiary px-1">
+            {data.suppressed_by_correlation.map((d, i) => (
+              <div key={i}>⏸ {d.reason}</div>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Backtest */}
+      {/* Roster + Backtest */}
+      <Roster />
       <BacktestPanel />
 
       {/* Honest disclaimer */}
       <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-surface/40 px-4 py-3">
         <AlertTriangle size={13} className="text-warning flex-shrink-0 mt-0.5" />
         <p className="text-[11px] text-text-secondary leading-relaxed">
-          <strong className="text-text-primary">This is a decision-support tool, not a guarantee.</strong>{' '}
-          No strategy wins consistently in all markets, and historical stats do not predict
-          future results. Forex trading carries a real risk of losing money — never risk
-          capital you cannot afford to lose, and never exceed the position size the risk
-          engine suggests.
+          <strong className="text-text-primary">No system — not even the legends' rules — wins every trade.</strong>{' '}
+          These traders were great because they lost small, not because they never lost.
+          Backtested stats do not predict future results. Forex carries real risk of loss;
+          never risk money you cannot afford to lose, and never exceed the suggested size.
         </p>
       </div>
     </div>
