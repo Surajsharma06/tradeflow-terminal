@@ -492,6 +492,9 @@ def _edge_check(pair: str, df: pd.DataFrame) -> dict:
         "has_edge": has_edge,
         "trailing_trades": n,
         "trailing_profit_factor": pf,
+        # Per-legend trailing performance on THIS pair — used by the
+        # quality score to reward strategies with a proven local record.
+        "by_trader": bt.get("by_trader", {}),
         "detail": (
             f"Trailing edge OK (PF {pf}, {n} trades)" if has_edge else
             f"NO EDGE: trailing PF {pf} over {n} trades — Livermore rule: "
@@ -500,6 +503,85 @@ def _edge_check(pair: str, df: pd.DataFrame) -> dict:
     }
     _edge_cache[pair] = (_time.time(), result)
     return result
+
+
+# ── Trade Quality Score ──────────────────────────────────────────────
+# Ranks every surviving signal 0–100 across five transparent factors,
+# so the UI can surface only the 1–2 highest-quality setups. Scoring
+# rewards exactly what the legends rewarded: agreement, proven edge,
+# asymmetric payoff, a clean regime, and a local track record.
+
+BEST_TRADE_MIN_SCORE = 60
+BEST_TRADE_MAX_COUNT = 2
+
+
+def _quality_score(sig: dict, edge: dict, regime: dict) -> tuple[int, list[dict]]:
+    factors: list[dict] = []
+    total = 0.0
+
+    # 1. Legend confluence (max 25) — Druckenmiller's conviction
+    if sig["confluence"] >= 3:
+        pts, note = 25.0, f"{sig['confluence']} legends agree — rare alignment"
+    elif sig["confluence"] == 2:
+        pts, note = 22.0, "Two legends agree independently"
+    else:
+        pts, note = 10.0, f"Single legend setup ({sig['trader']})"
+    factors.append({"factor": "Legend confluence", "points": round(pts), "max": 25, "note": note})
+    total += pts
+
+    # 2. Trailing edge strength on this pair (max 20)
+    pf = edge.get("trailing_profit_factor")
+    pf_v = float(pf) if pf is not None else 1.0
+    pts = max(0.0, min(20.0, (pf_v - 1.0) * 20.0))  # PF 2.0 → full marks
+    factors.append({"factor": "Pair edge (trailing PF)", "points": round(pts), "max": 20,
+                    "note": f"90-day ensemble PF {pf_v} on {sig['pair']}"})
+    total += pts
+
+    # 3. Risk:reward asymmetry (max 20) — PTJ's asymmetric bets
+    rr = float(sig["risk_reward"])
+    pts = max(0.0, min(20.0, (rr - 1.0) * 13.4))  # R:R 2.5 → full marks
+    factors.append({"factor": "Risk:reward", "points": round(pts), "max": 20,
+                    "note": f"1:{rr} payoff on the initial target"})
+    total += pts
+
+    # 4. Regime clarity (max 15) — how cleanly the market fits the play
+    a = regime.get("adx")
+    a_v = float(a) if a is not None else 20.0
+    if regime["regime"] in ("TRENDING_UP", "TRENDING_DOWN"):
+        pts = max(0.0, min(15.0, (a_v - ADX_TREND) / 15.0 * 15.0))
+        note = f"Trend strength ADX {a_v} (>{ADX_TREND:.0f} needed)"
+    else:  # RANGING plays score by how far ADX sits below the range line
+        pts = max(0.0, min(15.0, (ADX_RANGE - a_v) / 8.0 * 15.0))
+        note = f"Range quality ADX {a_v} (<{ADX_RANGE:.0f} needed)"
+    factors.append({"factor": "Regime clarity", "points": round(pts), "max": 15, "note": note})
+    total += pts
+
+    # 5. Lead legend's local record on this pair (max 20)
+    hist = (edge.get("by_trader") or {}).get(sig["trader"])
+    if hist:
+        nr = float(hist.get("net_r", 0.0))
+        if nr >= 2.0:
+            pts, note = 20.0, f"{sig['trader']}: {nr:+}R over {hist['trades']} trades here"
+        elif nr > 0:
+            pts, note = 13.0, f"{sig['trader']}: {nr:+}R over {hist['trades']} trades here"
+        else:
+            pts, note = 0.0, f"{sig['trader']} is {nr:+}R on this pair recently — caution"
+    else:
+        pts, note = 8.0, f"No recent {sig['trader']} trades on this pair (neutral)"
+    factors.append({"factor": "Legend's record here", "points": round(pts), "max": 20, "note": note})
+    total += pts
+
+    return round(total), factors
+
+
+def _grade(score: int) -> str:
+    if score >= 80:
+        return "A+ ELITE"
+    if score >= 70:
+        return "A STRONG"
+    if score >= BEST_TRADE_MIN_SCORE:
+        return "B+ SOLID"
+    return "B WATCH"
 
 
 def generate_signals(pairs: Optional[list[str]] = None,
@@ -537,13 +619,17 @@ def generate_signals(pairs: Optional[list[str]] = None,
             sig = _merge_pair_signals(pair, sigs, reg, governor)
             if sig:
                 sig["edge"] = edge
+                score, breakdown = _quality_score(sig, edge, reg)
+                sig["quality_score"] = score
+                sig["quality_grade"] = _grade(score)
+                sig["quality_breakdown"] = breakdown
                 merged.append(sig)
         except Exception as exc:
             logger.warning("Legends scan failed for %s: %s", pair, exc)
 
     # Dalio correlation guard: same-direction signals in highly
-    # correlated pairs are one bet — keep the higher-conviction one.
-    merged.sort(key=lambda s: (-s["confluence"], s["pair"]))
+    # correlated pairs are one bet — keep the higher-QUALITY one.
+    merged.sort(key=lambda s: (-s["quality_score"], s["pair"]))
     final: list[dict] = []
     dropped: list[dict] = []
     for sig in merged:
@@ -563,8 +649,21 @@ def generate_signals(pairs: Optional[list[str]] = None,
         else:
             final.append(sig)
 
+    # Best trades: top 1–2 signals that clear the quality bar. If
+    # nothing clears it, best_trades stays empty — no forced picks.
+    best = [s for s in final if s["quality_score"] >= BEST_TRADE_MIN_SCORE]
+    best = best[:BEST_TRADE_MAX_COUNT]
+    for s in final:
+        s["is_best"] = s in best
+
     return {
         "signals": final,
+        "best_trades": best,
+        "best_trade_note": (
+            None if best else
+            "No setup currently clears the quality bar "
+            f"({BEST_TRADE_MIN_SCORE}/100) — the legends don't force trades."
+        ),
         "suppressed_by_correlation": dropped,
         "regimes": regimes,
         "edges": edges,

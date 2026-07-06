@@ -146,3 +146,53 @@ class TestEnsemble:
     def test_correlation_lookup_symmetric(self):
         assert _corr("EUR/USD", "GBP/USD") == _corr("GBP/USD", "EUR/USD") == 0.85
         assert _corr("EUR/USD", "USD/ZAR") == 0.0
+
+
+# ── Quality scoring & best-trade selection ───────────────────────────
+
+from app.domain.legends.engine import _quality_score, _grade, BEST_TRADE_MIN_SCORE
+
+
+class TestQualityScore:
+    def _sig(self, confluence=1, rr=1.5, trader="Ed Seykota"):
+        return {"pair": "EUR/USD", "confluence": confluence,
+                "risk_reward": rr, "trader": trader}
+
+    def _edge(self, pf=1.4, by_trader=None):
+        return {"trailing_profit_factor": pf, "by_trader": by_trader or {}}
+
+    def _regime(self, regime="TRENDING_UP", adx=32.0):
+        return {"regime": regime, "adx": adx}
+
+    def test_score_bounded_0_100(self):
+        score, factors = _quality_score(
+            self._sig(confluence=3, rr=3.0),
+            self._edge(pf=2.5, by_trader={"Ed Seykota": {"net_r": 5.0, "trades": 6}}),
+            self._regime(adx=45),
+        )
+        assert 0 <= score <= 100
+        assert score >= 90  # everything maxed
+        assert len(factors) == 5
+        assert all(0 <= f["points"] <= f["max"] for f in factors)
+
+    def test_confluence_raises_score(self):
+        lo, _ = _quality_score(self._sig(confluence=1), self._edge(), self._regime())
+        hi, _ = _quality_score(self._sig(confluence=2), self._edge(), self._regime())
+        assert hi > lo
+
+    def test_losing_local_record_scores_zero_factor(self):
+        edge = self._edge(by_trader={"Ed Seykota": {"net_r": -2.0, "trades": 5}})
+        _, factors = _quality_score(self._sig(), edge, self._regime())
+        rec = next(f for f in factors if f["factor"] == "Legend's record here")
+        assert rec["points"] == 0
+
+    def test_weak_pf_scores_zero_edge_factor(self):
+        _, factors = _quality_score(self._sig(), self._edge(pf=0.8), self._regime())
+        e = next(f for f in factors if "PF" in f["factor"] or "edge" in f["factor"].lower())
+        assert e["points"] == 0
+
+    def test_grades(self):
+        assert _grade(85) == "A+ ELITE"
+        assert _grade(72) == "A STRONG"
+        assert _grade(BEST_TRADE_MIN_SCORE) == "B+ SOLID"
+        assert _grade(40) == "B WATCH"

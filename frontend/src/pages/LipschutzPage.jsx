@@ -21,6 +21,115 @@ const REGIME_STYLE = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Best Trade hero card — the 1-2 setups that clear the quality bar
+// ─────────────────────────────────────────────────────────────────────────────
+function ScoreRing({ score }) {
+  const r = 26;
+  const circ = 2 * Math.PI * r;
+  const color = score >= 80 ? '#34d764' : score >= 70 ? '#4d9fff' : '#f2c14e';
+  return (
+    <div className="relative w-[72px] h-[72px] flex-shrink-0" role="img"
+         aria-label={`Quality score ${score} out of 100`}>
+      <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">
+        <circle cx="32" cy="32" r={r} fill="none" stroke="var(--color-border)" strokeWidth="5" />
+        <circle
+          cx="32" cy="32" r={r} fill="none" stroke={color} strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray={`${(score / 100) * circ} ${circ}`}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="font-mono text-lg font-bold text-text-primary leading-none">{score}</span>
+        <span className="text-[8px] text-text-tertiary">/100</span>
+      </div>
+    </div>
+  );
+}
+
+function BestTradeCard({ sig, rank }) {
+  const [showFactors, setShowFactors] = useState(false);
+  const isBuy = sig.direction === 'BUY';
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14, scale: 0.99 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: rank * 0.08, duration: 0.3 }}
+      className="glass-card-elevated overflow-hidden border-2 !border-gold/40"
+    >
+      {/* Gold ribbon */}
+      <div className="flex items-center gap-2 px-4 py-2 bg-gold-subtle border-b border-gold/20">
+        <Crown size={13} className="text-gold" />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-gold">
+          {rank === 0 ? 'Best trade right now' : 'Runner-up'}
+        </span>
+        <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full badge-gradient text-white">
+          {sig.quality_grade}
+        </span>
+      </div>
+
+      <div className="p-4 flex items-center gap-4 flex-wrap">
+        <ScoreRing score={sig.quality_score} />
+        <div className="flex-1 min-w-[180px]">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-lg
+              ${isBuy ? 'bg-positive-subtle text-positive' : 'bg-negative-subtle text-negative'}`}>
+              {isBuy ? <TrendingUp size={12} /> : <TrendingDown size={12} />} {sig.direction}
+            </span>
+            <span className="font-mono text-lg font-bold text-text-primary">{sig.pair}</span>
+            {sig.conviction === 'HIGH' && (
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-purple-subtle text-purple">
+                ×{sig.confluence} LEGENDS
+              </span>
+            )}
+          </div>
+          <div className="text-[11px] text-text-secondary mt-1">
+            <span className="text-purple font-semibold">{sig.trader}</span> — {sig.rule}
+          </div>
+          <div className="flex items-center gap-4 mt-2 font-mono text-[11px] flex-wrap">
+            <span className="text-text-secondary">Entry <span className="text-text-primary font-bold">{sig.entry}</span></span>
+            <span className="text-negative">SL {sig.stop_loss}</span>
+            <span className="text-positive">TP {sig.take_profit}</span>
+            <span className="text-accent font-bold">R:R 1:{sig.risk_reward}</span>
+            {sig.position && (
+              <span className="text-text-tertiary">{sig.risk_pct_used}% risk · {Number(sig.position.units).toLocaleString()} units</span>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={() => setShowFactors((s) => !s)}
+          className="text-[10px] font-semibold text-accent hover:text-accent-hover cursor-pointer flex items-center gap-1"
+          aria-expanded={showFactors}
+        >
+          Why {sig.quality_score}/100 {showFactors ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        </button>
+      </div>
+
+      {showFactors && (
+        <div className="px-4 pb-4 space-y-1.5">
+          {sig.quality_breakdown?.map((f) => (
+            <div key={f.factor} className="flex items-center gap-3">
+              <span className="text-[10px] text-text-secondary w-40 flex-shrink-0">{f.factor}</span>
+              <div className="flex-1 h-1.5 rounded-full bg-surface overflow-hidden">
+                <div
+                  className="h-full rounded-full score-bar"
+                  style={{ width: `${(f.points / f.max) * 100}%` }}
+                />
+              </div>
+              <span className="font-mono text-[10px] text-text-primary w-12 text-right">{f.points}/{f.max}</span>
+            </div>
+          ))}
+          <div className="text-[10px] text-text-tertiary pt-1.5 space-y-0.5">
+            {sig.quality_breakdown?.map((f) => (
+              <div key={f.factor}>· {f.note}</div>
+            ))}
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Signal card — trader attribution + full reasoning
 // ─────────────────────────────────────────────────────────────────────────────
 function SignalCard({ sig, idx }) {
@@ -42,6 +151,11 @@ function SignalCard({ sig, idx }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-mono text-base font-bold text-text-primary">{sig.pair}</span>
+            {sig.quality_score != null && (
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-surface-hover text-text-secondary font-mono">
+                {sig.quality_score}/100
+              </span>
+            )}
             {sig.conviction === 'HIGH' && (
               <span className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full badge-gradient text-white">
                 <Crown size={9} /> HIGH CONVICTION ×{sig.confluence}
@@ -381,6 +495,8 @@ export default function LipschutzPage() {
   useEffect(() => { load(); }, [load]);
 
   const signals = data?.signals ?? [];
+  const bestTrades = data?.best_trades ?? [];
+  const otherSignals = signals.filter((s) => !s.is_best);
   const breaker = data?.circuit_breaker ? data.circuit_breaker_reason : null;
 
   return (
@@ -401,10 +517,10 @@ export default function LipschutzPage() {
             )}
           </div>
           <p className="text-xs text-text-secondary mt-1 max-w-[620px] leading-relaxed">
-            Eight legendary traders' documented rules, regime-gated: trend systems trade
-            trends, range systems trade ranges, and when a pair has no trailing edge the
-            engine <strong className="text-text-primary">stands aside</strong>. Every signal
-            shows exactly which legend fired it and why.
+            Eight legendary traders' rules scan every pair, score each setup 0–100 on five
+            factors, and surface only the <strong className="text-text-primary">1–2 best
+            trades</strong> that clear the quality bar. No edge → no trade; nothing elite →
+            nothing forced.
           </p>
         </div>
         <motion.button
@@ -440,11 +556,34 @@ export default function LipschutzPage() {
         </div>
       )}
 
+      {/* ── BEST TRADES: the 1-2 setups that clear the quality bar ── */}
+      {!loading && bestTrades.length > 0 && (
+        <div className="space-y-3">
+          {bestTrades.map((sig, i) => (
+            <BestTradeCard key={`best-${sig.pair}`} sig={sig} rank={i} />
+          ))}
+        </div>
+      )}
+      {!loading && data && bestTrades.length === 0 && signals.length > 0 && (
+        <div className="flex items-center gap-2 text-[11px] text-text-secondary bg-surface/40 border border-border/50 rounded-lg px-4 py-2.5">
+          <Crown size={13} className="text-gold flex-shrink-0" />
+          {data.best_trade_note}
+        </div>
+      )}
+
       {/* Market read: regimes + edge gates */}
       {data && <MarketBoard regimes={data.regimes} edges={data.edges} />}
 
-      {/* Signals */}
+      {/* Other signals */}
       <div className="space-y-3">
+        {!loading && otherSignals.length > 0 && (
+          <div className="flex items-center gap-2 px-1">
+            <Zap size={12} className="text-text-tertiary" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-text-tertiary">
+              Other setups (below the quality bar)
+            </span>
+          </div>
+        )}
         {loading ? (
           <div className="glass-card p-8 flex items-center justify-center gap-2 text-text-tertiary text-sm">
             <RefreshCw size={14} className="animate-spin" /> Scanning markets against eight legends' rules…
@@ -460,7 +599,7 @@ export default function LipschutzPage() {
             </div>
           </div>
         ) : (
-          signals.map((sig, i) => <SignalCard key={`${sig.pair}-${i}`} sig={sig} idx={i} />)
+          otherSignals.map((sig, i) => <SignalCard key={`${sig.pair}-${i}`} sig={sig} idx={i} />)
         )}
 
         {data?.suppressed_by_correlation?.length > 0 && (
