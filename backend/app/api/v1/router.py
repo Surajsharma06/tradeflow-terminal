@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     analytics,
     backtest,
     backtest_forex,
+    crypto,
     journal,
     legends,
     lipschutz,
@@ -28,6 +29,12 @@ api_router.include_router(
     lipschutz.router,
     prefix="/lipschutz",
     tags=["Lipschutz Mode"],
+)
+
+api_router.include_router(
+    crypto.router,
+    prefix="/crypto",
+    tags=["Crypto Analysis"],
 )
 
 api_router.include_router(

@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.domain.legends.engine import (
     generate_signals,
+    generate_super_trade,
     backtest,
     detect_regime,
     TRADER_ROSTER,
@@ -116,6 +117,33 @@ async def get_regime(pair: str = Query("EURUSD")):
         raise HTTPException(422, f"Not enough data for {norm}")
 
     result = {"pair": norm, **detect_regime(df)}
+    _cache_set(key, result)
+    return result
+
+
+@router.get("/super-trade", summary="Single best trade from the legends ensemble right now")
+async def get_super_trade(
+    pairs: Optional[str] = Query(None, description="Comma-separated pairs (default: all 6 majors)"),
+    equity: float = Query(10_000.0, gt=0),
+    risk_pct: float = Query(1.0, gt=0, le=2.0),
+):
+    pair_list = [p.strip() for p in pairs.split(",")] if pairs else DEFAULT_PAIRS
+    key = f"legends-super:{','.join(sorted(pair_list))}:{equity}:{risk_pct}"
+    cached = _cache_get(key)
+    if cached:
+        return cached
+
+    gov = RiskGovernor(equity=equity, risk_per_trade_pct=risk_pct)
+    try:
+        result = await asyncio.wait_for(
+            asyncio.to_thread(generate_super_trade, pair_list, gov), timeout=120.0
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(504, "Super-trade scan timed out")
+    except Exception as exc:
+        logger.exception("Super-trade scan failed")
+        raise HTTPException(500, f"Super-trade scan failed: {exc}")
+
     _cache_set(key, result)
     return result
 

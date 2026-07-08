@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, LayoutDashboard, Globe, BarChart3, FlaskConical,
-  Wrench, Settings, TrendingUp, CornerDownLeft, ShieldCheck,
+  Wrench, Settings, TrendingUp, CornerDownLeft, ShieldCheck, Bitcoin,
 } from 'lucide-react';
 
 // ── Searchable dataset: pages + market symbols ────────────────────
@@ -11,6 +11,7 @@ const PAGES = [
   { type: 'page', label: 'Dashboard',  to: '/',          icon: LayoutDashboard, hint: 'Market overview & signals' },
   { type: 'page', label: 'Forex',      to: '/forex',     icon: Globe,           hint: 'ICT/SMC forex intelligence' },
   { type: 'page', label: 'Legends',    to: '/discipline', icon: ShieldCheck,    hint: 'Eight legendary traders, regime-gated' },
+  { type: 'page', label: 'Crypto',     to: '/crypto',     icon: Bitcoin,        hint: 'BTC, ETH, SOL — confluence analysis + journal' },
   { type: 'page', label: 'Analytics',  to: '/analytics', icon: BarChart3,       hint: 'Performance & equity curve' },
   { type: 'page', label: 'Backtest',   to: '/backtest',  icon: FlaskConical,    hint: 'Strategy backtesting' },
   { type: 'page', label: 'Tools',      to: '/tools',     icon: Wrench,          hint: 'Position size & charges' },
@@ -29,8 +30,9 @@ const SYMBOLS = [
   { type: 'symbol', label: 'USD/CAD',    to: '/forex', hint: 'Forex Major' },
   { type: 'symbol', label: 'AUD/USD',    to: '/forex', hint: 'Forex Major' },
   { type: 'symbol', label: 'NZD/USD',    to: '/forex', hint: 'Forex Major' },
-  { type: 'symbol', label: 'BTC/USDT',   to: '/',      hint: 'Crypto' },
-  { type: 'symbol', label: 'ETH/USDT',   to: '/',      hint: 'Crypto' },
+  { type: 'symbol', label: 'BTC/USDT',   to: '/crypto', hint: 'Crypto — Bitcoin analysis' },
+  { type: 'symbol', label: 'ETH/USDT',   to: '/crypto', hint: 'Crypto — Ethereum analysis' },
+  { type: 'symbol', label: 'SOL/USDT',   to: '/crypto', hint: 'Crypto — Solana analysis' },
   { type: 'symbol', label: 'GOLD (XAU)', to: '/',      hint: 'Commodity' },
 ];
 

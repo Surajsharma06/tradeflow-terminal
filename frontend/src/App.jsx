@@ -9,6 +9,7 @@ import ToolsPage from './pages/ToolsPage';
 import SettingsPage from './pages/SettingsPage';
 import ForexPage from './pages/ForexPage';
 import LipschutzPage from './pages/LipschutzPage';
+import CryptoPage from './pages/CryptoPage';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -22,6 +23,7 @@ function AnimatedRoutes() {
         <Route path="/backtest" element={<PageTransition><BacktestPage /></PageTransition>} />
         <Route path="/tools" element={<PageTransition><ToolsPage /></PageTransition>} />
         <Route path="/settings" element={<PageTransition><SettingsPage /></PageTransition>} />
+        <Route path="/crypto" element={<PageTransition><CryptoPage /></PageTransition>} />
       </Routes>
     </AnimatePresence>
   );

@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, Zap, RefreshCw, AlertTriangle, TrendingUp, TrendingDown,
   ChevronDown, ChevronUp, FlaskConical, Scale, BookOpen, Users,
-  Crown, PauseCircle, Activity,
+  Crown, PauseCircle, Activity, Sparkles, Info,
 } from 'lucide-react';
 import { API } from '../lib/api';
 
@@ -19,6 +19,200 @@ const REGIME_STYLE = {
   CHOPPY:        { label: 'Choppy — sit out', cls: 'bg-warning-subtle text-warning' },
   NO_DATA:       { label: 'No data',    cls: 'bg-surface-hover text-text-tertiary' },
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Super Trade hero — single best opportunity from all 8 legends' rules
+// ─────────────────────────────────────────────────────────────────────────────
+function SuperTradeCard({ data, loading }) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="rounded-2xl border-2 border-purple/30 bg-gradient-to-br from-purple/10 to-accent/5 p-5 flex items-center gap-3 text-text-tertiary text-sm">
+        <Sparkles size={16} className="text-purple animate-pulse" />
+        Calculating best trade from 8 legends' rules…
+      </div>
+    );
+  }
+
+  const st = data?.super_trade;
+  if (!st) {
+    return (
+      <div className="rounded-2xl border-2 border-border/40 bg-surface/40 p-5 flex items-center gap-3">
+        <Sparkles size={16} className="text-text-tertiary" />
+        <span className="text-sm text-text-secondary">
+          {data?.note || 'No strategy fires on any pair right now — Livermore rule: sit out.'}
+        </span>
+      </div>
+    );
+  }
+
+  const isBuy = st.direction === 'BUY';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      className="rounded-2xl border-2 border-purple/50 overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, rgba(180,140,255,0.08) 0%, rgba(77,159,255,0.06) 100%)',
+        boxShadow: '0 0 40px rgba(180,140,255,0.12), 0 4px 24px rgba(0,0,0,0.3)',
+      }}
+    >
+      {/* Purple crown header */}
+      <div
+        className="flex items-center gap-2 px-5 py-2.5 border-b border-purple/20"
+        style={{ background: 'linear-gradient(90deg, rgba(180,140,255,0.18), rgba(77,159,255,0.10))' }}
+      >
+        <Sparkles size={14} className="text-purple" />
+        <span className="text-[11px] font-black uppercase tracking-widest text-purple">
+          ⚡ Super Trade — Best Setup Right Now
+        </span>
+        {st.edge_relaxed && (
+          <span className="ml-2 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-warning-subtle text-warning border border-warning/30">
+            EDGE RELAXED
+          </span>
+        )}
+        <span className="ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full bg-purple/20 text-purple border border-purple/30">
+          {st.quality_grade}
+        </span>
+      </div>
+
+      <div className="p-5">
+        <div className="flex items-start gap-5 flex-wrap">
+          {/* Score ring */}
+          <div className="flex-shrink-0 flex flex-col items-center gap-1">
+            <div className="relative w-20 h-20" role="img" aria-label={`Quality score ${st.quality_score}`}>
+              <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(180,140,255,0.15)" strokeWidth="5" />
+                <circle
+                  cx="32" cy="32" r="26" fill="none"
+                  stroke={st.quality_score >= 80 ? '#34d764' : st.quality_score >= 70 ? '#4d9fff' : '#b48cff'}
+                  strokeWidth="5" strokeLinecap="round"
+                  strokeDasharray={`${(st.quality_score / 100) * 2 * Math.PI * 26} ${2 * Math.PI * 26}`}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="font-mono text-xl font-black text-text-primary leading-none">{st.quality_score}</span>
+                <span className="text-[8px] text-text-tertiary">/100</span>
+              </div>
+            </div>
+            <span className="text-[9px] text-text-muted text-center">Quality<br/>Score</span>
+          </div>
+
+          {/* Main info */}
+          <div className="flex-1 min-w-[200px]">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <span className={`flex items-center gap-1 text-[12px] font-black px-3 py-1.5 rounded-xl
+                ${isBuy ? 'bg-positive-subtle text-positive' : 'bg-negative-subtle text-negative'}`}>
+                {isBuy ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+                {st.direction}
+              </span>
+              <span className="font-mono text-2xl font-black text-text-primary tracking-tight">{st.pair}</span>
+              {st.conviction === 'HIGH' && (
+                <span className="text-[9px] font-bold px-2 py-1 rounded-full badge-gradient text-white">
+                  ×{st.confluence} LEGENDS
+                </span>
+              )}
+            </div>
+            <div className="text-[12px] text-purple font-semibold mb-1">{st.trader}</div>
+            <div className="text-[11px] text-text-secondary mb-3">{st.rule}</div>
+
+            {/* Price levels */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                ['Entry', st.entry, 'text-text-primary'],
+                ['Stop Loss', st.stop_loss, 'text-negative'],
+                ['Target', st.take_profit, 'text-positive'],
+                ['R:R', `1:${st.risk_reward}`, 'text-accent'],
+              ].map(([l, v, c]) => (
+                <div key={l} className="rounded-lg bg-surface/60 border border-border/40 p-2.5 text-center">
+                  <div className="text-[9px] text-text-muted uppercase tracking-wider mb-0.5">{l}</div>
+                  <div className={`font-mono text-sm font-bold ${c}`}>{v}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Regime + position */}
+            <div className="flex flex-wrap items-center gap-3 mt-3 text-[11px]">
+              <span className="text-text-tertiary">Regime: <span className="font-semibold text-text-secondary">{st.regime}</span></span>
+              {st.position && (
+                <span className="text-text-tertiary">
+                  Size: <span className="font-mono text-text-primary font-semibold">{Number(st.position.units).toLocaleString()} units</span>
+                  {' '}· {st.risk_pct_used}% risk
+                </span>
+              )}
+              <span className="text-[9px] text-text-muted">{st.timeframe}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Super note */}
+        {st.super_note && (
+          <div className="mt-4 flex items-start gap-2 rounded-xl bg-purple/5 border border-purple/20 px-3 py-2.5">
+            <Info size={12} className="text-purple flex-shrink-0 mt-0.5" />
+            <span className="text-[11px] text-text-secondary leading-relaxed">{st.super_note}</span>
+          </div>
+        )}
+
+        {/* Expand reasons */}
+        <button
+          onClick={() => setExpanded(e => !e)}
+          className="mt-3 flex items-center gap-1.5 text-[10px] font-semibold text-purple hover:text-purple/80 cursor-pointer"
+          aria-expanded={expanded}
+        >
+          {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          {expanded ? 'Hide reasoning' : `Show why this setup fired (${st.reasons?.length} reasons)`}
+        </button>
+
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-3 rounded-xl bg-surface/50 border border-border/40 p-3 space-y-1.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <BookOpen size={11} className="text-purple" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">All 8 legends' rules checked</span>
+                  {st.agreeing_legends?.length > 1 && (
+                    <span className="text-[9px] text-purple">({st.agreeing_legends.join(' · ')})</span>
+                  )}
+                </div>
+                {(st.reasons || []).map((r, i) => (
+                  <div key={i} className="flex items-start gap-2 text-[11px] text-text-secondary leading-relaxed">
+                    <span className="w-1 h-1 rounded-full bg-purple mt-1.5 flex-shrink-0" />
+                    {r}
+                  </div>
+                ))}
+              </div>
+
+              {/* Quality breakdown */}
+              {st.quality_breakdown?.length > 0 && (
+                <div className="mt-2 space-y-1.5">
+                  {st.quality_breakdown.map((f) => (
+                    <div key={f.factor} className="flex items-center gap-3">
+                      <span className="text-[10px] text-text-secondary w-40 flex-shrink-0">{f.factor}</span>
+                      <div className="flex-1 h-1.5 rounded-full bg-surface overflow-hidden">
+                        <div className="h-full rounded-full score-bar" style={{ width: `${(f.points / f.max) * 100}%` }} />
+                      </div>
+                      <span className="font-mono text-[10px] text-text-primary w-12 text-right">{f.points}/{f.max}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Best Trade hero card — the 1-2 setups that clear the quality bar
@@ -474,21 +668,40 @@ function BacktestPanel() {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function LipschutzPage() {
   const [data, setData] = useState(null);
+  const [superData, setSuperData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [superLoading, setSuperLoading] = useState(true);
   const [offline, setOffline] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setSuperLoading(true);
     try {
-      const res = await fetch(`${API}/api/v1/legends/signals`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setData(await res.json());
-      setOffline(false);
+      // Fetch signals and super-trade in parallel
+      const [sigRes, superRes] = await Promise.allSettled([
+        fetch(`${API}/api/v1/legends/signals`),
+        fetch(`${API}/api/v1/legends/super-trade`),
+      ]);
+
+      if (sigRes.status === 'fulfilled' && sigRes.value.ok) {
+        setData(await sigRes.value.json());
+        setOffline(false);
+      } else {
+        setData(null);
+        setOffline(true);
+      }
+
+      if (superRes.status === 'fulfilled' && superRes.value.ok) {
+        setSuperData(await superRes.value.json());
+      } else {
+        setSuperData(null);
+      }
     } catch {
       setData(null);
       setOffline(true);
     } finally {
       setLoading(false);
+      setSuperLoading(false);
     }
   }, []);
 
@@ -555,6 +768,16 @@ export default function LipschutzPage() {
           <span><strong>Circuit breaker active:</strong> {breaker}</span>
         </div>
       )}
+
+      {/* ── SUPER TRADE: single best setup calculated from all 8 legends' rules ── */}
+      <motion.div {...fadeUp} transition={{ delay: 0.08, duration: 0.28 }}>
+        <div className="flex items-center gap-2 px-1 mb-2">
+          <Sparkles size={13} className="text-purple" />
+          <span className="text-[11px] font-bold uppercase tracking-wider text-purple">Super Trade</span>
+          <span className="text-[10px] text-text-muted">— calculated from all 8 legends' rules right now</span>
+        </div>
+        <SuperTradeCard data={superData} loading={superLoading} />
+      </motion.div>
 
       {/* ── BEST TRADES: the 1-2 setups that clear the quality bar ── */}
       {!loading && bestTrades.length > 0 && (

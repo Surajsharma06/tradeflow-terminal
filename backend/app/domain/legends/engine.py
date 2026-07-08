@@ -675,6 +675,85 @@ def generate_signals(pairs: Optional[list[str]] = None,
 
 
 # ══════════════════════════════════════════════════════════════════════
+#  Super Trade — always surface the single best opportunity right now
+# ══════════════════════════════════════════════════════════════════════
+
+def generate_super_trade(pairs: Optional[list[str]] = None,
+                         governor: Optional[RiskGovernor] = None) -> dict:
+    """
+    Always return the single best trade the legends can find right now.
+
+    Priority:
+      1. Best trade from the normal edge-gated scan (score ≥ BEST_TRADE_MIN_SCORE)
+      2. If nothing passes the quality bar, take the highest-scoring signal
+         across ALL pairs IGNORING the edge gate — and flag it clearly so the
+         trader knows the edge context is cautious.
+      3. If truly no strategy fires on any pair, return None.
+    """
+    governor = governor or RiskGovernor()
+    pairs = [_normalise_pair(p) for p in (pairs or DEFAULT_PAIRS)]
+
+    # Step 1: try the normal (edge-gated) scan
+    normal = generate_signals(pairs, governor)
+    if normal.get("best_trades"):
+        best = dict(normal["best_trades"][0])
+        best["super_trade"] = True
+        best["edge_relaxed"] = False
+        best["super_note"] = (
+            f"Highest quality setup right now — {best['quality_score']}/100 "
+            f"across five factors. All 8 legends' rules satisfied and trailing "
+            f"edge confirmed on this pair."
+        )
+        return {"super_trade": best, "source": "normal",
+                "generated_at": datetime.now(IST).isoformat()}
+
+    # Step 2: scan without edge gate — return best available
+    candidates: list[dict] = []
+    for pair in pairs:
+        try:
+            df = _fetch_ohlcv(pair, days=90)
+            if df is None or len(df) < PTJ_SMA + 10:
+                continue
+            edge = _edge_check(pair, df)   # still computed, just not used as a gate
+            reg, sigs = _evaluate_pair(df, pair)
+            sig = _merge_pair_signals(pair, sigs, reg, governor)
+            if sig:
+                sig["edge"] = edge
+                score, breakdown = _quality_score(sig, edge, reg)
+                sig["quality_score"] = score
+                sig["quality_grade"] = _grade(score)
+                sig["quality_breakdown"] = breakdown
+                candidates.append(sig)
+        except Exception as exc:
+            logger.warning("Super-trade relaxed scan failed on %s: %s", pair, exc)
+
+    if not candidates:
+        return {
+            "super_trade": None,
+            "source": "none",
+            "note": (
+                "No strategy fires on any pair right now. "
+                "Livermore rule in effect: no position is a position. Patience."
+            ),
+            "generated_at": datetime.now(IST).isoformat(),
+        }
+
+    candidates.sort(key=lambda s: -s["quality_score"])
+    best = dict(candidates[0])
+    best["super_trade"] = True
+    best["edge_relaxed"] = True
+    pf = (best.get("edge") or {}).get("trailing_profit_factor")
+    n  = (best.get("edge") or {}).get("trailing_trades", 0)
+    best["super_note"] = (
+        f"Best available setup ({best['quality_score']}/100). "
+        f"Note: the 90-day trailing edge on this pair is cautious "
+        f"(PF {pf} over {n} trades). Use minimum size or wait for the edge to recover."
+    )
+    return {"super_trade": best, "source": "relaxed",
+            "generated_at": datetime.now(IST).isoformat()}
+
+
+# ══════════════════════════════════════════════════════════════════════
 #  Backtest — ensemble replayed bar-by-bar with Seykota trailing exits
 # ══════════════════════════════════════════════════════════════════════
 
