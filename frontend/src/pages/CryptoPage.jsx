@@ -700,6 +700,110 @@ function WeeklySummary({ journal }) {
   );
 }
 
+// ── Quick Forex-style Signal Card (shown at top for all active signals) ──
+const ASSET_ICONS_MAP = { BTC: '₿', ETH: 'Ξ', SOL: '◎' };
+
+function QuickTradeCard({ symbol, signal, price, expanded, onToggle }) {
+  const isLong = signal.direction === 'LONG';
+  const riskAmt = Math.abs(signal.entry - signal.stop_loss);
+  const rr1 = signal.risk_reward_1 || (riskAmt > 0 ? Math.round(Math.abs(signal.take_profit_1 - signal.entry) / riskAmt * 10) / 10 : '?');
+  const rr2 = signal.risk_reward_2 || (riskAmt > 0 ? Math.round(Math.abs(signal.take_profit_2 - signal.entry) / riskAmt * 10) / 10 : '?');
+  const fmt = (n) => n != null ? `$${Number(n).toLocaleString()}` : '—';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`glass-card overflow-hidden border transition-all duration-300 ${isLong ? 'border-positive/35' : 'border-negative/35'}`}
+      style={{ boxShadow: isLong ? '0 0 20px rgba(63,185,80,0.08)' : '0 0 20px rgba(248,81,73,0.08)' }}
+    >
+      <div className="p-4 cursor-pointer hover:bg-surface-hover/20 transition-colors" onClick={onToggle}>
+        <div className="flex items-start justify-between gap-3">
+          {/* Left: badge + asset */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`px-3 py-1.5 rounded-lg font-bold text-sm flex-shrink-0 ${isLong ? 'bg-positive text-white' : 'bg-negative text-white'}`}>
+              {isLong ? '▲ BUY' : '▼ SELL'}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl leading-none">{ASSET_ICONS_MAP[symbol]}</span>
+                <span className="text-base font-bold font-mono text-text-primary">{symbol}/USDT</span>
+                {signal.confluence_score && (
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-purple-subtle/40 text-purple">
+                    {signal.confluence_score}
+                  </span>
+                )}
+              </div>
+              <div className="text-[10px] text-text-muted mt-0.5">{signal.timeframe || '4H trend / 1H entry'}</div>
+            </div>
+          </div>
+          {/* Right: current price + expand */}
+          <div className="text-right flex-shrink-0">
+            <div className="font-mono text-lg font-bold text-text-primary">{fmt(price)}</div>
+            <div className="text-[9px] text-text-muted">Current Price</div>
+            <ChevronDown size={13} className={`text-text-muted mt-1 ml-auto transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          </div>
+        </div>
+
+        {/* Entry / SL / TP row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+          {[
+            { label: 'ENTRY',          val: fmt(signal.entry),          color: 'text-text-primary' },
+            { label: 'STOP LOSS',      val: fmt(signal.stop_loss),      color: 'text-negative'     },
+            { label: 'TP1 (1:2)',      val: fmt(signal.take_profit_1),  color: 'text-positive'     },
+            { label: `TP2  R:R 1:${rr2}`, val: fmt(signal.take_profit_2), color: 'text-positive'  },
+          ].map(({ label, val, color }) => (
+            <div key={label} className="rounded-lg bg-surface/60 p-2 text-center">
+              <div className="text-[9px] text-text-muted mb-0.5">{label}</div>
+              <div className={`font-mono text-xs font-bold ${color}`}>{val}</div>
+            </div>
+          ))}
+        </div>
+
+        {signal.position_size && (
+          <div className="flex items-center gap-2 mt-2 text-[10px] text-text-secondary">
+            <Shield size={10} className="text-gold" />
+            Position: <span className="font-mono font-bold">{signal.position_size.units.toFixed(6)} units</span>
+            · Risk: <span className="font-mono font-bold text-warning">${signal.position_size.risk_amount}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Expanded reasons */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden border-t border-border/30"
+          >
+            <div className="p-4 bg-surface/30 space-y-2">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                <Info size={9} /> Why this signal fired
+              </div>
+              <ul className="space-y-1">
+                {signal.reasons?.map((r, i) => (
+                  <li key={i} className="flex items-start gap-2 text-[11px] text-text-secondary">
+                    <span className={`w-1 h-1 rounded-full flex-shrink-0 mt-1.5 ${isLong ? 'bg-positive' : 'bg-negative'}`} />
+                    {r}
+                  </li>
+                ))}
+              </ul>
+              {signal.confidence_note && (
+                <div className="flex items-start gap-2 rounded-lg bg-surface/40 px-3 py-2 mt-2">
+                  <AlertCircle size={10} className="text-accent flex-shrink-0 mt-0.5" />
+                  <span className="text-[11px] text-text-secondary">{signal.confidence_note}</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 // ── Asset Price Header ────────────────────────────────────────────────
 const ASSET_ICONS = {
   BTC: '₿',
@@ -790,6 +894,7 @@ export default function CryptoPage() {
   const [balance, setBalance] = useState(10000);
   const [riskPct, setRiskPct] = useState(1.0);
   const [showRisk, setShowRisk] = useState(false);
+  const [expandedSig, setExpandedSig] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -910,21 +1015,53 @@ export default function CryptoPage() {
         )}
       </AnimatePresence>
 
-      {/* Fear & Greed + active signals */}
+      {/* ── Fear & Greed bar ── */}
       {data && (
         <div className="flex flex-wrap items-center gap-3">
           <FearGreedBadge fg={fg} />
-          {data.active_signals?.length > 0 ? (
-            <div className="flex items-center gap-2 text-[11px] text-positive">
-              <Zap size={11} />
-              Active signals: {data.active_signals.join(', ')}
-            </div>
-          ) : (
-            <span className="text-[11px] text-text-muted">No active signals — market conditions not aligned</span>
-          )}
-          <span className="text-[9px] text-text-muted ml-auto">{data.generated_at?.split('T')[1]?.slice(0,8)} IST</span>
+          <span className="text-[9px] text-text-muted ml-auto">{data.generated_at?.split('T')[1]?.slice(0,8)} UTC</span>
         </div>
       )}
+
+      {/* ── Active Trade Signals (Forex-style) ── */}
+      {data && (() => {
+        const activeSigs = ['BTC','ETH','SOL'].filter(s => data.assets?.[s]?.signal);
+        return (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Zap size={13} className="text-accent" />
+              <span className="text-sm font-semibold text-text-primary">Active Trade Signals</span>
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                activeSigs.length > 0 ? 'bg-positive-subtle text-positive' : 'bg-surface text-text-muted'
+              }`}>{activeSigs.length} / 3 assets</span>
+            </div>
+            {activeSigs.length > 0 ? (
+              <div className="space-y-3">
+                {activeSigs.map(sym => (
+                  <QuickTradeCard
+                    key={sym}
+                    symbol={sym}
+                    signal={data.assets[sym].signal}
+                    price={data.assets[sym].price}
+                    expanded={expandedSig === sym}
+                    onToggle={() => setExpandedSig(p => p === sym ? null : sym)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="glass-card p-6 flex items-center gap-3 text-text-secondary">
+                <Activity size={16} className="text-text-muted" />
+                <div>
+                  <div className="text-sm font-semibold text-text-primary">No trade setups right now</div>
+                  <div className="text-[11px] text-text-tertiary mt-0.5">
+                    Confluence building — need 3/7 factors + 4H & 1H trend alignment. Check back in 15–30 min.
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Asset tabs */}
       <div className="flex gap-1 p-1 rounded-xl bg-surface/60 border border-border/40">

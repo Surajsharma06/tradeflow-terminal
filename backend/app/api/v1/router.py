@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     analytics,
     backtest,
     backtest_forex,
+    commodity,
     crypto,
     journal,
     legends,
@@ -35,6 +36,12 @@ api_router.include_router(
     crypto.router,
     prefix="/crypto",
     tags=["Crypto Analysis"],
+)
+
+api_router.include_router(
+    commodity.router,
+    prefix="/commodity",
+    tags=["Commodity Analysis"],
 )
 
 api_router.include_router(
