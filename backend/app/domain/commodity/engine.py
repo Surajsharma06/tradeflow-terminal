@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
@@ -126,17 +127,29 @@ _CURVE_TTL    = 3600.0
 # ══════════════════════════════════════════════════════════════════════
 
 def _fetch_commodity(symbol: str, period: str = "60d", interval: str = "1h") -> Optional[pd.DataFrame]:
-    try:
-        df = yf.Ticker(symbol).history(period=period, interval=interval, auto_adjust=True)
-        if df is None or df.empty:
-            return None
-        df.columns = [c.lower() for c in df.columns]
-        cols = [c for c in ("open", "high", "low", "close", "volume") if c in df.columns]
-        df = df[cols].copy().dropna()
-        return df if len(df) >= 20 else None
-    except Exception as exc:
-        logger.warning("_fetch_commodity %s failed: %s", symbol, exc)
-        return None
+    for attempt in range(2):
+        try:
+            df = yf.Ticker(symbol).history(period=period, interval=interval, auto_adjust=True)
+            if df is None or df.empty:
+                if attempt == 0:
+                    time.sleep(1)
+                    continue
+                return None
+            # Handle both regular Index and MultiIndex column names
+            if hasattr(df.columns, 'levels'):
+                df.columns = [c[0].lower() if isinstance(c, tuple) else c.lower() for c in df.columns]
+            else:
+                df.columns = [c.lower() for c in df.columns]
+            cols = [c for c in ("open", "high", "low", "close", "volume") if c in df.columns]
+            if not cols:
+                return None
+            df = df[cols].copy().dropna()
+            return df if len(df) >= 20 else None
+        except Exception as exc:
+            logger.warning("_fetch_commodity %s attempt %d failed: %s", symbol, attempt + 1, exc)
+            if attempt == 0:
+                time.sleep(1)
+    return None
 
 
 # ── COT (CFTC Disaggregated Futures) ─────────────────────────────────
@@ -155,7 +168,7 @@ def _get_cot_data(symbol: str, keyword: str) -> dict:
             "$order": "report_date_as_yyyy_mm_dd DESC",
             "$limit": "156",
         }
-        with httpx.Client(timeout=15) as c:
+        with httpx.Client(timeout=8) as c:
             r = c.get(url, params=params)
 
         if r.status_code != 200 or not r.json():
@@ -868,14 +881,23 @@ def analyze_commodity(
 def analyze_all(account_balance: float = 10_000.0, risk_pct: float = 1.0) -> dict:
     events = get_upcoming_events(7)
     results: dict[str, dict] = {}
-    for sym in ASSETS:
+
+    # Run all 4 assets in parallel — reduces total wall-clock time from
+    # ~40s sequential to ~10s parallel on Railway's network.
+    def _run(sym: str) -> tuple[str, dict]:
         try:
-            results[sym] = analyze_commodity(sym, events=events,
-                                              account_balance=account_balance,
-                                              risk_pct=risk_pct)
+            return sym, analyze_commodity(sym, events=events,
+                                          account_balance=account_balance,
+                                          risk_pct=risk_pct)
         except Exception as exc:
             logger.exception("Commodity analysis failed for %s", sym)
-            results[sym] = {"error": str(exc), "symbol": sym}
+            return sym, {"error": str(exc), "symbol": sym}
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futures = {pool.submit(_run, sym): sym for sym in ASSETS}
+        for future in as_completed(futures, timeout=90):
+            sym, data = future.result()
+            results[sym] = data
 
     active = [s for s, r in results.items() if r.get("signal")]
     return {

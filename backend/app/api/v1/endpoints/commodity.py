@@ -39,10 +39,10 @@ async def get_commodity_signals(
     if c := _cget(key): return c
     try:
         result = await asyncio.wait_for(
-            asyncio.to_thread(analyze_all, balance, risk_pct), timeout=120.0
+            asyncio.to_thread(analyze_all, balance, risk_pct), timeout=90.0
         )
     except asyncio.TimeoutError:
-        raise HTTPException(504, "Commodity scan timed out")
+        raise HTTPException(504, "Commodity scan timed out — please retry")
     except Exception as exc:
         logger.exception("Commodity scan failed"); raise HTTPException(500, str(exc))
     _cset(key, result)
