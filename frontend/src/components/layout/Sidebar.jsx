@@ -123,7 +123,7 @@ function SidebarContents({ collapsed, onClose }) {
             {({ isActive }) => (
               <>
                 {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-accent shadow-[0_0_8px_rgba(56,139,253,0.6)]" />
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-accent shadow-[0_0_10px_rgba(47,158,116,0.55)]" />
                 )}
                 <item.icon size={19} className={`flex-shrink-0 transition-colors duration-200 ${
                   isActive ? 'text-accent' : 'text-text-tertiary group-hover:text-text-primary'

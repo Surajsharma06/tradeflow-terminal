@@ -6,7 +6,7 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <meta name="description" content="TradeFlow 3.0 — AI-powered trading terminal with real-time market data, disciplined signal generation, backtesting, and portfolio analytics for Indian and global markets." />
-    <meta name="theme-color" content="#070812" />
+    <meta name="theme-color" content="#e8eee9" />
     <meta name="color-scheme" content="dark light" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -21,14 +21,15 @@
       (function() {
         try {
           var t = localStorage.getItem('theme-pref');
-          var theme = t ? JSON.parse(t).state && JSON.parse(t).state.theme : 'dark';
-          document.documentElement.setAttribute('data-theme', theme || 'dark');
-          if (theme === 'light') document.body && (document.body.style.backgroundColor = '#eef2fa');
-        } catch(e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+          var theme = t ? JSON.parse(t).state && JSON.parse(t).state.theme : 'light';
+          theme = theme || 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.backgroundColor = theme === 'light' ? '#e8eee9' : '#0d0f0e';
+        } catch(e) { document.documentElement.setAttribute('data-theme', 'light'); }
       })();
     </script>
   </head>
-  <body style="background-color: #070812;">
+  <body style="background-color: #e8eee9;">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

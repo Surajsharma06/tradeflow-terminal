@@ -38,9 +38,9 @@ const POSITIONS = [
 ];
 
 const RISK_BARS = [
-  { label: 'Daily Loss Limit',  used: 1.2, max: 3.0,  color: '#3fb950' },
-  { label: 'Position Exposure', used: 38,  max: 100,  color: '#388bfd' },
-  { label: 'Drawdown',          used: 2.1, max: 10,   color: '#e3b341' },
+  { label: 'Daily Loss Limit',  used: 1.2, max: 3.0,  color: 'var(--color-positive)' },
+  { label: 'Position Exposure', used: 38,  max: 100,  color: 'var(--color-accent)' },
+  { label: 'Drawdown',          used: 2.1, max: 10,   color: 'var(--color-gold)' },
 ];
 
 const ASSETS = ['NIFTY', 'S&P', 'BTC', 'Gold', 'Crude', 'DXY', 'EUR/USD'];
@@ -71,12 +71,12 @@ function makeSparkline(positive, len = 20) {
 }
 
 function corrColor(v) {
-  if (v === 1)    return '#21262d';
-  if (v >= 0.6)   return '#da3633';
-  if (v >= 0.3)   return '#f85149aa';
-  if (v >= 0)     return '#21262d';
-  if (v >= -0.3)  return '#388bfdaa';
-  return '#1f6feb';
+  if (v === 1)    return 'var(--color-surface-active)';
+  if (v >= 0.6)   return 'var(--color-negative)';
+  if (v >= 0.3)   return 'var(--color-negative-subtle)';
+  if (v >= 0)     return 'var(--color-surface-active)';
+  if (v >= -0.3)  return 'var(--color-accent-subtle)';
+  return 'var(--color-accent)';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ function corrColor(v) {
 function Sparkline({ positive }) {
   // Stable: computed once per mount via lazy useState initializer
   const [pts] = useState(() => makeSparkline(positive));
-  const color = positive ? '#3fb950' : '#f85149';
+  const color = positive ? 'var(--color-positive)' : 'var(--color-negative)';
   const d = `M ${pts.map(p => `${p.x},${p.y}`).join(' L ')}`;
   return (
     <svg width={72} height={26} className="opacity-75 flex-shrink-0">
@@ -272,7 +272,7 @@ function CorrHeatmap() {
         ))}
       </div>
       <div className="flex items-center justify-center gap-4 mt-3">
-        {[['#1f6feb', '−1 Inverse'], ['#21262d', '0 Neutral'], ['#da3633', '+1 Correlated']].map(([c, l]) => (
+        {[['var(--color-accent)', '−1 Inverse'], ['var(--color-surface-active)', '0 Neutral'], ['var(--color-negative)', '+1 Correlated']].map(([c, l]) => (
           <span key={l} className="flex items-center gap-1.5 text-[10px] text-text-muted">
             <span className="w-3 h-2 rounded-sm inline-block" style={{ background: c }} />{l}
           </span>
@@ -394,40 +394,47 @@ export default function DashboardPage() {
     <div className="p-4 lg:p-5 min-h-screen space-y-4">
 
       {/* ── Header ── */}
-      <div className={`flex items-center justify-between flex-wrap gap-3 ${anim()}`}>
+      <div className={`flex items-end justify-between flex-wrap gap-3 pt-1 ${anim()}`}>
         <div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-accent-subtle flex items-center justify-center">
-              <BarChart3 size={16} className="text-accent" />
-            </div>
-            <h1 className="text-xl font-bold text-text-primary">Trading Dashboard</h1>
-            <span className="px-2 py-0.5 rounded-full bg-positive-subtle text-positive text-[9px] font-bold animate-pulse">
-              ● LIVE
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-positive-subtle text-positive text-[10px] font-semibold tracking-wide">
+              <span className="status-dot status-dot-live" /> Live market
             </span>
+            <span className="text-[11px] text-text-tertiary">AI signals · risk · correlation</span>
           </div>
-          <p className="text-xs text-text-muted ml-10 mt-0.5">Market overview • AI Signals • Risk • Correlation</p>
+          <h1 className="font-display text-4xl sm:text-5xl font-bold text-text-primary leading-[1.02] tracking-tight">
+            Dashboard
+          </h1>
         </div>
-        <div className="flex items-center gap-2 text-xs text-text-secondary">
-          <Clock size={12} />
-          <span className="font-mono">{time} IST</span>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-surface/70 border border-border/60 text-xs text-text-secondary">
+          <Clock size={13} className="text-accent" />
+          <span className="font-mono font-tabular">{time}</span>
+          <span className="text-text-muted">IST</span>
         </div>
       </div>
 
       {/* ── Stats Bar ── */}
       <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 ${anim('delay-75')}`}>
         {[
-          { label: 'Active Signals', value: signals.length, icon: Zap,        color: '#388bfd' },
-          { label: 'High Confidence',value: highConf,       icon: Shield,      color: '#e3b341' },
-          { label: 'BUY Signals',    value: buyCount,       icon: TrendingUp,  color: '#3fb950' },
-          { label: 'SELL Signals',   value: sellCount,      icon: TrendingDown,color: '#f85149' },
+          { label: 'Active Signals', value: signals.length, icon: Zap,        color: 'var(--color-accent)',  ink: true },
+          { label: 'High Confidence',value: highConf,       icon: Shield,      color: 'var(--color-gold)' },
+          { label: 'BUY Signals',    value: buyCount,       icon: TrendingUp,  color: 'var(--color-positive)' },
+          { label: 'SELL Signals',   value: sellCount,      icon: TrendingDown,color: 'var(--color-negative)' },
         ].map((s) => (
-          <div key={s.label} className="glass-card p-3 flex items-center gap-3 cursor-default hover:border-border-light transition-colors">
-            <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: s.color + '22' }}>
-              <s.icon size={14} style={{ color: s.color }} />
+          <div
+            key={s.label}
+            className={`${s.ink ? 'ink-card' : 'glass-card'} hover-lift p-4 flex items-center gap-3 cursor-default transition-all`}
+          >
+            <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center"
+              style={{ background: s.ink ? 'rgba(255,255,255,0.08)' : `color-mix(in srgb, ${s.color} 16%, transparent)` }}>
+              <s.icon size={16} style={{ color: s.ink ? 'var(--color-accent)' : s.color }} />
             </div>
             <div>
-              <div className="text-xl font-bold font-mono text-text-primary">{s.value}</div>
-              <div className="text-[10px] text-text-muted">{s.label}</div>
+              <div className={`text-2xl font-bold font-display font-tabular ${s.ink ? '' : 'text-text-primary'}`}
+                style={s.ink ? { color: 'var(--color-on-ink)' } : undefined}>
+                {s.value}
+              </div>
+              <div className={`text-[10px] ${s.ink ? 'opacity-70' : 'text-text-muted'}`}>{s.label}</div>
             </div>
           </div>
         ))}

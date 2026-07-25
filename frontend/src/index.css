@@ -1,98 +1,106 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ================================================================
-   TRADEFLOW 3.0 DESIGN SYSTEM — Glossy Dark Theme
-   Deep blue-violet space with vibrant, saturated accents.
+   TRADEFLOW 3.0 DESIGN SYSTEM — "Sage Terminal"
+   Inspired by the airy Awsmd crypto concept: soft sage canvas,
+   matte cards, deep-ink emphasis, and a calm mint-green accent.
+   Dark theme = the reference's charcoal list rows, expanded.
    ================================================================ */
 
 :root {
-  /* ── Background Surfaces ── */
-  --color-bg: #070812;
-  --color-bg-alt: #0a0d1a;
-  --color-surface: #0e1322;
-  --color-surface-elevated: #151b2e;
-  --color-surface-hover: #1c2440;
-  --color-surface-active: #253052;
+  /* ── Background Surfaces (warm charcoal-ink) ── */
+  --color-bg: #0d0f0e;
+  --color-bg-alt: #131614;
+  --color-surface: #181c1a;
+  --color-surface-elevated: #1f2421;
+  --color-surface-hover: #262b28;
+  --color-surface-active: #2f352f;
 
   /* ── Border & Divider ── */
-  --color-border: #222c48;
-  --color-border-light: #2f3c60;
-  --color-border-focus: #4d9fff;
-  --color-border-glow: rgba(77, 159, 255, 0.45);
+  --color-border: #2a302c;
+  --color-border-light: #384038;
+  --color-border-focus: #6fd0a6;
+  --color-border-glow: rgba(111, 208, 166, 0.4);
 
   /* ── Text ── */
-  --color-text-primary: #eaf1fb;
-  --color-text-secondary: #93a0b8;
-  --color-text-tertiary: #71809c;
-  --color-text-muted: #4c5872;
+  --color-text-primary: #eef2ee;
+  --color-text-secondary: #9aa79d;
+  --color-text-tertiary: #74837a;
+  --color-text-muted: #525d55;
 
-  /* ── Trading Colors (vibrant) ── */
-  --color-positive: #34d764;
-  --color-positive-subtle: rgba(52, 215, 100, 0.16);
-  --color-positive-strong: #5cf28a;
-  --color-negative: #ff5d55;
-  --color-negative-subtle: rgba(255, 93, 85, 0.16);
-  --color-negative-strong: #ff8a80;
-  --color-warning: #f5b52e;
-  --color-warning-subtle: rgba(245, 181, 46, 0.16);
-  --color-info: #58b2ff;
-  --color-info-subtle: rgba(88, 178, 255, 0.16);
+  /* ── Trading Colors ── */
+  --color-positive: #45cf95;
+  --color-positive-subtle: rgba(69, 207, 149, 0.16);
+  --color-positive-strong: #6ee7b0;
+  --color-negative: #ff6b62;
+  --color-negative-subtle: rgba(255, 107, 98, 0.16);
+  --color-negative-strong: #ff958d;
+  --color-warning: #f0b544;
+  --color-warning-subtle: rgba(240, 181, 68, 0.16);
+  --color-info: #58c6d8;
+  --color-info-subtle: rgba(88, 198, 216, 0.16);
 
-  /* ── Accent & Brand (glossy palette) ── */
-  --color-accent: #4d9fff;
-  --color-accent-subtle: rgba(77, 159, 255, 0.16);
-  --color-accent-hover: #74b5ff;
-  --color-accent-muted: #2f7de8;
-  --color-purple: #b48cff;
-  --color-purple-subtle: rgba(180, 140, 255, 0.16);
-  --color-gold: #f2c14e;
-  --color-gold-subtle: rgba(242, 193, 78, 0.16);
-  --color-cyan: #35d0e8;
-  --color-cyan-subtle: rgba(53, 208, 232, 0.14);
-  --color-pink: #f471b5;
-  --color-pink-subtle: rgba(244, 113, 181, 0.14);
+  /* ── Accent & Brand (calm sage-mint) ── */
+  --color-accent: #6fd0a6;
+  --color-accent-subtle: rgba(111, 208, 166, 0.16);
+  --color-accent-hover: #8ce0bc;
+  --color-accent-muted: #4bab84;
+  --color-purple: #7fd4c4;
+  --color-purple-subtle: rgba(127, 212, 196, 0.16);
+  --color-gold: #ecc463;
+  --color-gold-subtle: rgba(236, 196, 99, 0.16);
+  --color-cyan: #5fd4c0;
+  --color-cyan-subtle: rgba(95, 212, 192, 0.14);
+  --color-pink: #f19bb0;
+  --color-pink-subtle: rgba(241, 155, 176, 0.14);
+
+  /* ── Ink emphasis (near-black cards / primary buttons) ── */
+  --color-ink: #0c0e0d;
+  --color-ink-soft: #171b19;
+  --color-on-ink: #f3f6f2;
 
   /* ── Chart Candle Colors ── */
-  --color-candle-up: #2bd4a0;
-  --color-candle-down: #ff6259;
+  --color-candle-up: #45cf95;
+  --color-candle-down: #ff6b62;
 
   /* ── Ambient gradient blobs (app background) ── */
-  --ambient-1: rgba(77, 159, 255, 0.16);
-  --ambient-2: rgba(180, 140, 255, 0.13);
-  --ambient-3: rgba(53, 208, 232, 0.10);
+  --ambient-1: rgba(111, 208, 166, 0.12);
+  --ambient-2: rgba(127, 212, 196, 0.10);
+  --ambient-3: rgba(236, 196, 99, 0.06);
 
-  /* ── Glass ── */
-  --glass-bg: linear-gradient(165deg, rgba(23, 30, 52, 0.78), rgba(13, 18, 34, 0.66));
-  --glass-border: rgba(102, 148, 255, 0.16);
-  --glass-highlight: rgba(255, 255, 255, 0.075);
-  --glass-shadow: 0 6px 28px rgba(3, 6, 18, 0.45);
-  --glass-hover-border: rgba(116, 181, 255, 0.34);
-  --glass-hover-glow: 0 10px 36px rgba(56, 120, 255, 0.16);
+  /* ── Glass / matte cards ── */
+  --glass-bg: linear-gradient(165deg, rgba(31, 36, 33, 0.86), rgba(21, 25, 23, 0.78));
+  --glass-border: rgba(120, 150, 135, 0.16);
+  --glass-highlight: rgba(255, 255, 255, 0.05);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --glass-hover-border: rgba(111, 208, 166, 0.34);
+  --glass-hover-glow: 0 16px 40px rgba(0, 0, 0, 0.45);
 
   /* ── Typography ── */
   --font-sans: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", "Inter", -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", monospace;
 
   /* ── Spacing ── */
-  --spacing-panel: 16px;
+  --spacing-panel: 18px;
 
-  /* ── Radius ── */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* ── Radius (soft, generous — Awsmd style) ── */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
 
-  /* ── Shadows ── */
-  --shadow-glow-green: 0 0 22px rgba(52, 215, 100, 0.35);
-  --shadow-glow-red: 0 0 22px rgba(255, 93, 85, 0.35);
-  --shadow-glow-blue: 0 0 22px rgba(77, 159, 255, 0.35);
-  --shadow-glow-gold: 0 0 22px rgba(242, 193, 78, 0.35);
-  --shadow-elevated: 0 8px 32px rgba(2, 4, 12, 0.5);
-  --shadow-card: 0 2px 10px rgba(2, 4, 12, 0.35);
+  /* ── Shadows (soft matte, no neon glow) ── */
+  --shadow-glow-green: 0 8px 26px rgba(69, 207, 149, 0.22);
+  --shadow-glow-red: 0 8px 26px rgba(255, 107, 98, 0.22);
+  --shadow-glow-blue: 0 8px 26px rgba(111, 208, 166, 0.22);
+  --shadow-glow-gold: 0 8px 26px rgba(236, 196, 99, 0.22);
+  --shadow-elevated: 0 20px 44px rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 /* ================================================================
@@ -100,67 +108,73 @@
    ================================================================ */
 
 [data-theme="light"] {
-  --color-bg: #eef2fa;
-  --color-bg-alt: #e5ebf7;
+  /* Soft sage canvas + crisp white cards — the Awsmd airy look */
+  --color-bg: #e8eee9;
+  --color-bg-alt: #eef3ee;
   --color-surface: #ffffff;
-  --color-surface-elevated: #f7faff;
-  --color-surface-hover: #eef3fc;
-  --color-surface-active: #e1e9f8;
+  --color-surface-elevated: #f5f9f4;
+  --color-surface-hover: #eef4ec;
+  --color-surface-active: #e3ece1;
 
-  --color-border: #d3ddef;
-  --color-border-light: #e2e9f6;
-  --color-border-focus: #3b6ff0;
-  --color-border-glow: rgba(59, 111, 240, 0.3);
+  --color-border: #dbe4dc;
+  --color-border-light: #e8efe7;
+  --color-border-focus: #2f9e74;
+  --color-border-glow: rgba(47, 158, 116, 0.28);
 
-  --color-text-primary: #101a30;
-  --color-text-secondary: #48566f;
-  --color-text-tertiary: #64748b;
-  --color-text-muted: #94a3b8;
+  --color-text-primary: #131e18;
+  --color-text-secondary: #4c5b52;
+  --color-text-tertiary: #6c7c71;
+  --color-text-muted: #97a89c;
 
-  --color-positive: #0eaf4d;
-  --color-positive-subtle: rgba(14, 175, 77, 0.12);
-  --color-positive-strong: #0b8f3f;
-  --color-negative: #e5484d;
-  --color-negative-subtle: rgba(229, 72, 77, 0.11);
-  --color-negative-strong: #c53035;
-  --color-warning: #dd8a09;
-  --color-warning-subtle: rgba(221, 138, 9, 0.12);
-  --color-info: #2b6ff0;
-  --color-info-subtle: rgba(43, 111, 240, 0.11);
+  --color-positive: #12a05f;
+  --color-positive-subtle: rgba(18, 160, 95, 0.12);
+  --color-positive-strong: #0c854c;
+  --color-negative: #e05650;
+  --color-negative-subtle: rgba(224, 86, 80, 0.11);
+  --color-negative-strong: #c23c37;
+  --color-warning: #c8880f;
+  --color-warning-subtle: rgba(200, 136, 15, 0.12);
+  --color-info: #2c8fb0;
+  --color-info-subtle: rgba(44, 143, 176, 0.11);
 
-  --color-accent: #3b6ff0;
-  --color-accent-subtle: rgba(59, 111, 240, 0.11);
-  --color-accent-hover: #2857d6;
-  --color-accent-muted: #5b85f2;
-  --color-purple: #8250e8;
-  --color-purple-subtle: rgba(130, 80, 232, 0.11);
-  --color-gold: #c07f10;
-  --color-gold-subtle: rgba(192, 127, 16, 0.12);
-  --color-cyan: #0aa2c0;
-  --color-cyan-subtle: rgba(10, 162, 192, 0.11);
-  --color-pink: #db4d94;
-  --color-pink-subtle: rgba(219, 77, 148, 0.11);
+  --color-accent: #2f9e74;
+  --color-accent-subtle: rgba(47, 158, 116, 0.12);
+  --color-accent-hover: #26825f;
+  --color-accent-muted: #52b78e;
+  --color-purple: #2a9d9d;
+  --color-purple-subtle: rgba(42, 157, 157, 0.11);
+  --color-gold: #bf8b16;
+  --color-gold-subtle: rgba(191, 139, 22, 0.13);
+  --color-cyan: #199e93;
+  --color-cyan-subtle: rgba(25, 158, 147, 0.11);
+  --color-pink: #d1729a;
+  --color-pink-subtle: rgba(209, 114, 154, 0.11);
 
-  --color-candle-up: #0eaf4d;
-  --color-candle-down: #e5484d;
+  /* ── Ink emphasis — the dark list rows from the reference ── */
+  --color-ink: #141815;
+  --color-ink-soft: #1c211d;
+  --color-on-ink: #f2f6f1;
 
-  --ambient-1: rgba(59, 111, 240, 0.10);
-  --ambient-2: rgba(130, 80, 232, 0.08);
-  --ambient-3: rgba(10, 162, 192, 0.07);
+  --color-candle-up: #12a05f;
+  --color-candle-down: #e05650;
 
-  --glass-bg: linear-gradient(165deg, rgba(255, 255, 255, 0.92), rgba(244, 248, 255, 0.80));
-  --glass-border: rgba(129, 156, 219, 0.30);
-  --glass-highlight: rgba(255, 255, 255, 0.95);
-  --glass-shadow: 0 6px 26px rgba(84, 112, 190, 0.12);
-  --glass-hover-border: rgba(59, 111, 240, 0.40);
-  --glass-hover-glow: 0 10px 34px rgba(59, 111, 240, 0.16);
+  --ambient-1: rgba(47, 158, 116, 0.10);
+  --ambient-2: rgba(42, 157, 157, 0.07);
+  --ambient-3: rgba(191, 139, 22, 0.05);
 
-  --shadow-elevated: 0 8px 32px rgba(60, 80, 140, 0.14);
-  --shadow-card: 0 2px 10px rgba(60, 80, 140, 0.08);
-  --shadow-glow-green: 0 0 20px rgba(14, 175, 77, 0.22);
-  --shadow-glow-red: 0 0 20px rgba(229, 72, 77, 0.22);
-  --shadow-glow-blue: 0 0 20px rgba(59, 111, 240, 0.22);
-  --shadow-glow-gold: 0 0 20px rgba(192, 127, 16, 0.22);
+  --glass-bg: linear-gradient(165deg, rgba(255, 255, 255, 0.96), rgba(246, 250, 245, 0.90));
+  --glass-border: rgba(190, 205, 194, 0.60);
+  --glass-highlight: rgba(255, 255, 255, 0.9);
+  --glass-shadow: 0 12px 30px rgba(60, 90, 72, 0.10);
+  --glass-hover-border: rgba(47, 158, 116, 0.34);
+  --glass-hover-glow: 0 18px 40px rgba(47, 158, 116, 0.13);
+
+  --shadow-elevated: 0 20px 44px rgba(48, 76, 60, 0.12);
+  --shadow-card: 0 6px 20px rgba(48, 76, 60, 0.07);
+  --shadow-glow-green: 0 10px 26px rgba(18, 160, 95, 0.18);
+  --shadow-glow-red: 0 10px 26px rgba(224, 86, 80, 0.18);
+  --shadow-glow-blue: 0 10px 26px rgba(47, 158, 116, 0.18);
+  --shadow-glow-gold: 0 10px 26px rgba(191, 139, 22, 0.18);
 }
 
 /* ================================================================
@@ -187,6 +201,11 @@
     font-family: var(--font-sans);
     line-height: 1.5;
     overflow-x: hidden;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
 
   ::selection {
@@ -263,18 +282,44 @@
   /* ── Gradient buttons & badges ── */
   .btn-gradient {
     background: linear-gradient(135deg, var(--color-accent), var(--color-purple));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 16px rgba(77, 159, 255, 0.3);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 18px rgba(47, 158, 116, 0.28);
     transition: filter 0.2s ease, box-shadow 0.2s ease;
   }
   .btn-gradient:hover {
-    filter: brightness(1.12);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 22px rgba(77, 159, 255, 0.45);
+    filter: brightness(1.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 24px rgba(47, 158, 116, 0.4);
   }
 
   .badge-gradient {
     background: linear-gradient(135deg, var(--color-accent), var(--color-purple));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
+
+  /* ── Ink primitives — the near-black cards & buttons from the
+     reference. Work in both themes (always dark surface). ── */
+  .ink-card {
+    background: linear-gradient(160deg, var(--color-ink-soft), var(--color-ink));
+    color: var(--color-on-ink);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+  }
+  .btn-ink {
+    background: var(--color-ink);
+    color: var(--color-on-ink);
+    border-radius: 999px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  }
+  .btn-ink:hover { filter: brightness(1.15); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24); }
+  .btn-ink:active { transform: scale(0.97); }
+
+  /* Display type for headings — Space Grotesk, tight & bold */
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  .pill { border-radius: 999px; }
 
   /* ── Active nav item: glossy gradient rail ── */
   .nav-active {
@@ -293,12 +338,10 @@
 
   .text-profit {
     color: var(--color-positive);
-    text-shadow: 0 0 10px rgba(52, 215, 100, 0.5);
   }
 
   .text-loss {
     color: var(--color-negative);
-    text-shadow: 0 0 10px rgba(255, 93, 85, 0.5);
   }
 
   .text-gradient {

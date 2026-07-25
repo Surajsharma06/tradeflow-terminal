@@ -3,16 +3,17 @@ import { persist } from 'zustand/middleware';
 
 const useThemeStore = create(persist(
   (set) => ({
-    theme: 'dark',
+    theme: 'light',
     toggle: () => set((s) => {
       const next = s.theme === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
-      document.body.style.backgroundColor = next === 'light' ? '#eef2fa' : '#070812';
+      document.body.style.backgroundColor = next === 'light' ? '#e8eee9' : '#0d0f0e';
       return { theme: next };
     }),
     init: (theme) => {
-      document.documentElement.setAttribute('data-theme', theme || 'dark');
-      document.body.style.backgroundColor = theme === 'light' ? '#eef2fa' : '#070812';
+      const t = theme || 'light';
+      document.documentElement.setAttribute('data-theme', t);
+      document.body.style.backgroundColor = t === 'light' ? '#e8eee9' : '#0d0f0e';
     },
   }),
   { name: 'theme-pref' }
