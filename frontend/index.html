@@ -22,8 +22,9 @@
       (function() {
         try {
           var t = localStorage.getItem('theme-pref');
-          var theme = t ? JSON.parse(t).state && JSON.parse(t).state.theme : 'light';
-          theme = theme || 'light';
+          var parsed = t ? JSON.parse(t) : null;
+          // Honor the store's version-1 reset: older prefs default to light.
+          var theme = (parsed && parsed.version === 1 && parsed.state && parsed.state.theme) || 'light';
           document.documentElement.setAttribute('data-theme', theme);
           document.documentElement.style.backgroundColor = theme === 'light' ? '#e8eee9' : '#0b0d0a';
         } catch(e) { document.documentElement.setAttribute('data-theme', 'light'); }

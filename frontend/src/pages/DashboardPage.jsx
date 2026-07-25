@@ -263,7 +263,13 @@ function CorrHeatmap() {
                 key={`${ri}-${ci}`}
                 title={`${ASSETS[ri]} vs ${ASSETS[ci]}: ${val.toFixed(2)}`}
                 className="rounded-sm flex items-center justify-center font-mono font-bold cursor-default"
-                style={{ background: corrColor(val), color: '#e6edf3', height: 28, fontSize: 9 }}
+                style={{
+                  background: corrColor(val),
+                  // Strong-inverse cells are filled with the bright accent →
+                  // use dark ink text; darker cells keep light text.
+                  color: val < -0.3 ? 'var(--color-on-accent)' : 'var(--color-text-primary)',
+                  height: 28, fontSize: 9,
+                }}
               >
                 {val.toFixed(2)}
               </div>

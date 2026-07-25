@@ -16,7 +16,13 @@ const useThemeStore = create(persist(
       document.body.style.backgroundColor = t === 'light' ? '#e8eee9' : '#0b0d0a';
     },
   }),
-  { name: 'theme-pref' }
+  {
+    name: 'theme-pref',
+    // Bump version to reset older visitors (who may have 'dark' saved) back
+    // to the light default once. They can still toggle to dark afterwards.
+    version: 1,
+    migrate: (persisted) => ({ ...(persisted || {}), theme: 'light' }),
+  }
 ));
 
 export default useThemeStore;
