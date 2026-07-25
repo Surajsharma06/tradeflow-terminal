@@ -1,5 +1,6 @@
 import Header from './Header';
 import Sidebar from './Sidebar';
+import BottomNav from './BottomNav';
 
 // ══════════════════════════════════════════════════════════════════
 //  LAYOUT SHELL
@@ -18,13 +19,18 @@ export default function Layout({ children }) {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
 
-        {/* ── Main content area ── */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4">
+        {/* ── Main content area ──
+            Extra bottom padding on mobile so the fixed BottomNav never
+            covers content; normal on md+ where the sidebar is used. */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-24 md:pb-4">
           <div className="max-w-[1800px] mx-auto animate-fade-in">
             {children}
           </div>
         </main>
       </div>
+
+      {/* ── Mobile bottom navigation (md:hidden) ── */}
+      <BottomNav />
     </div>
   );
 }

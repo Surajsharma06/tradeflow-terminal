@@ -13,8 +13,11 @@ import {
   Globe,
   Bitcoin,
   Layers,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { LogoMark } from '../common/Logo';
+import useThemeStore from '../../stores/themeStore';
 
 const NAV_ITEMS = [
   { to: '/',           icon: LayoutDashboard, label: 'Dashboard' },
@@ -52,6 +55,31 @@ function PaperTradingToggle({ collapsed }) {
         </div>
       )}
     </div>
+  );
+}
+
+function ThemeRow({ collapsed }) {
+  const { theme, toggle } = useThemeStore();
+  const isDark = theme === 'dark';
+  return (
+    <button
+      onClick={toggle}
+      className={`flex items-center w-full ${collapsed ? 'justify-center' : 'gap-2.5 px-3'} text-text-secondary hover:text-text-primary transition-colors`}
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      <span className="flex items-center justify-center w-6 h-6 rounded-md bg-accent-subtle text-accent flex-shrink-0">
+        {isDark ? <Sun size={13} /> : <Moon size={13} />}
+      </span>
+      {!collapsed && (
+        <div className="flex flex-col items-start">
+          <span className="text-[10px] font-semibold uppercase tracking-wider">Theme</span>
+          <span className="text-[9px] font-bold uppercase tracking-wider text-accent">
+            {isDark ? 'DARK' : 'LIGHT'}
+          </span>
+        </div>
+      )}
+    </button>
   );
 }
 
@@ -147,6 +175,7 @@ function SidebarContents({ collapsed, onClose }) {
 
       {/* Bottom section */}
       <div className="border-t border-border/30 py-3 space-y-3">
+        <ThemeRow collapsed={collapsed} />
         <PaperTradingToggle collapsed={collapsed} />
         <ConnectionStatus collapsed={collapsed} />
         {/* Collapse toggle (desktop only) */}
