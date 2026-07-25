@@ -83,7 +83,7 @@ export default function NotificationsMenu({ open, onClose, anchorRef }) {
               <Bell size={13} className="text-text-secondary" />
               <span className="text-xs font-bold text-text-primary uppercase tracking-wider">Notifications</span>
               {unread > 0 && (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-accent text-white">{unread}</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-accent text-on-accent">{unread}</span>
               )}
             </div>
             {unread > 0 && (

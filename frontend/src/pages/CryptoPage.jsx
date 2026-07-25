@@ -505,7 +505,7 @@ function JournalModal({ entry, onClose, onSave }) {
                     status === s
                       ? s === 'WIN' ? 'bg-positive text-white'
                         : s === 'LOSS' ? 'bg-negative text-white'
-                        : 'bg-accent text-white'
+                        : 'bg-accent text-on-accent'
                       : 'bg-surface text-text-secondary hover:bg-surface-hover'
                   }`}
                 >{s}</button>

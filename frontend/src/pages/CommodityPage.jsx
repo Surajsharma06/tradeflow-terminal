@@ -968,7 +968,7 @@ function JournalModal({ entry, tags, onClose, onSave }) {
         </div>
         <div className="flex gap-2">
           {['WIN', 'LOSS', 'BREAKEVEN'].map(s => (
-            <button key={s} onClick={() => setStatus(s)} className={`flex-1 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${status === s ? (s === 'WIN' ? 'bg-positive text-white' : s === 'LOSS' ? 'bg-negative text-white' : 'bg-accent text-white') : 'bg-surface text-text-secondary'}`}>{s}</button>
+            <button key={s} onClick={() => setStatus(s)} className={`flex-1 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${status === s ? (s === 'WIN' ? 'bg-positive text-white' : s === 'LOSS' ? 'bg-negative text-white' : 'bg-accent text-on-accent') : 'bg-surface text-text-secondary'}`}>{s}</button>
           ))}
         </div>
         <div>

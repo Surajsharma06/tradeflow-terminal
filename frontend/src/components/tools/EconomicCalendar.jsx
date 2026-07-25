@@ -131,7 +131,7 @@ export default function EconomicCalendar({ className = '' }) {
                 onClick={() => setFilter(key)}
                 className={`px-2.5 py-1 text-xs rounded-md transition-all duration-200
                   ${filter === key
-                    ? 'bg-accent text-white'
+                    ? 'bg-accent text-on-accent'
                     : 'text-text-secondary hover:bg-surface-hover'
                   }`}
               >
@@ -147,7 +147,7 @@ export default function EconomicCalendar({ className = '' }) {
                 onClick={() => setImpactFilter(level)}
                 className={`px-2 py-1 text-xs rounded-md transition-all duration-200 capitalize
                   ${impactFilter === level
-                    ? 'bg-accent text-white'
+                    ? 'bg-accent text-on-accent'
                     : 'text-text-secondary hover:bg-surface-hover'
                   }`}
               >

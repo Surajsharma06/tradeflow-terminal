@@ -96,6 +96,12 @@ class SMCSignal:
     )
     reason: str = ""
 
+    # Extra confluence: Fibonacci OTE + EMA200 trend
+    fib_golden: bool = False               # entry inside 0.62–0.79 golden zone
+    fib_zone: Optional[tuple] = None       # (top, bottom) of golden zone
+    fib_levels: Optional[dict] = None      # full retracement ladder
+    ema200_aligned: bool = False           # price on trend side of EMA200
+
 
 # ── Data Fetching (Twelve Data — Real-Time) ───────────────────────────────
 
@@ -428,6 +434,58 @@ def get_4h_bias(df_4h: pd.DataFrame) -> str:
 
 # ── Signal Generator ──────────────────────────────────────────────────────
 
+def fib_retracement(df: pd.DataFrame, lookback: int = 40) -> dict:
+    """
+    Fibonacci retracement from the most recent significant swing.
+
+    Returns the retracement ladder plus the ICT "OTE" (Optimal Trade Entry)
+    golden zone — the 0.62–0.79 pocket where Smart Money most often enters
+    after a pullback. Used as an entry-quality confluence factor.
+    """
+    seg = df.tail(lookback)
+    if len(seg) < 5:
+        return {}
+    hi = float(seg["high"].max())
+    lo = float(seg["low"].min())
+    if hi <= lo:
+        return {}
+    # Swing direction: up-leg if the low printed before the high
+    up_leg = seg["low"].idxmin() < seg["high"].idxmax()
+    rng = hi - lo
+
+    def level(r: float) -> float:
+        # retracement measured back from the swing extreme
+        return hi - rng * r if up_leg else lo + rng * r
+
+    levels = {
+        "0.236": round(level(0.236), 5),
+        "0.382": round(level(0.382), 5),
+        "0.5":   round(level(0.5),   5),
+        "0.618": round(level(0.618), 5),
+        "0.705": round(level(0.705), 5),
+        "0.786": round(level(0.786), 5),
+    }
+    gz_a, gz_b = level(0.618), level(0.786)
+    lo_g, hi_g = sorted((gz_a, gz_b))
+    return {
+        "up_leg": up_leg,
+        "swing_high": round(hi, 5),
+        "swing_low": round(lo, 5),
+        "levels": levels,
+        "golden_zone": (round(hi_g, 5), round(lo_g, 5)),  # (top, bottom)
+        "eq_50": round(level(0.5), 5),
+    }
+
+
+def in_golden_zone(price: float, fib: dict) -> bool:
+    """True when price sits inside the Fibonacci OTE golden zone."""
+    gz = fib.get("golden_zone")
+    if not gz:
+        return False
+    top, bottom = gz
+    return bottom <= price <= top
+
+
 def generate_signal(pair: str) -> Optional[SMCSignal]:
     """
     Full multi-timeframe Smart Money signal for a forex pair.
@@ -477,6 +535,15 @@ def generate_signal(pair: str) -> Optional[SMCSignal]:
     ema_bull = e9v > e15v and price > e15v
     ema_bear = e9v < e15v and price < e15v
 
+    # ── EMA 200 trend filter (15m) ────────────────────────────
+    above_200 = price > e200v
+    below_200 = price < e200v
+
+    # ── Fibonacci retracement + OTE golden zone ───────────────
+    fib      = fib_retracement(df_15m, lookback=40)
+    in_ote   = in_golden_zone(price, fib)
+    fib_zone = fib.get("golden_zone")
+
     pip = pip_size(pair)
 
     # ══════════════════════════════════════════════════════════
@@ -507,6 +574,16 @@ def generate_signal(pair: str) -> Optional[SMCSignal]:
         buy_score += 10
         buy_reasons.append("EMA9 > EMA15 (15m bullish)")
 
+    if above_200:
+        buy_score += 10
+        buy_reasons.append("Price above EMA200 (trend up)")
+
+    if in_ote and fib.get("up_leg"):
+        buy_score += 20
+        buy_reasons.append(
+            f"Price in Fib golden zone {fib_zone[1]:.5f}–{fib_zone[0]:.5f} (0.62–0.79 OTE)"
+        )
+
     # ══════════════════════════════════════════════════════════
     # SELL Setup
     # Conditions: 4H bearish | buy-side sweep | bearish FVG | EMA bearish
@@ -533,6 +610,16 @@ def generate_signal(pair: str) -> Optional[SMCSignal]:
     if ema_bear:
         sell_score += 10
         sell_reasons.append("EMA9 < EMA15 (15m bearish)")
+
+    if below_200:
+        sell_score += 10
+        sell_reasons.append("Price below EMA200 (trend down)")
+
+    if in_ote and not fib.get("up_leg"):
+        sell_score += 20
+        sell_reasons.append(
+            f"Price in Fib golden zone {fib_zone[1]:.5f}–{fib_zone[0]:.5f} (0.62–0.79 OTE)"
+        )
 
     # ── Pick best direction ───────────────────────────────────
     if buy_score >= 35 and buy_score >= sell_score:
@@ -622,6 +709,13 @@ def generate_signal(pair: str) -> Optional[SMCSignal]:
         ema200=round(e200v, 5),
         current_price=round(price, 5),
         reason=" | ".join(reasons),
+        fib_golden=bool(in_ote and (
+            (direction == "BUY"  and fib.get("up_leg")) or
+            (direction == "SELL" and not fib.get("up_leg"))
+        )),
+        fib_zone=fib_zone,
+        fib_levels=fib.get("levels"),
+        ema200_aligned=(above_200 if direction == "BUY" else below_200),
     )
     # ── Order Blocks + Key Levels ─────────────────────────────
     try:
@@ -693,6 +787,11 @@ def signal_to_dict(sig: SMCSignal) -> dict:
         "liq_sweep":     sig.liq_sweep,
         "fvg_zone":      sig.fvg_zone,
         "sweep_level":   sig.sweep_level,
+        # Fibonacci OTE + EMA200 trend confluence
+        "fib_golden":     sig.fib_golden,
+        "fib_zone":       sig.fib_zone,
+        "fib_levels":     sig.fib_levels,
+        "ema200_aligned": sig.ema200_aligned,
         "reason":        sig.reason,
         "timestamp":     sig.timestamp,
         "timeframe_entry": sig.timeframe_entry,

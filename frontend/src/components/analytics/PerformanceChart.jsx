@@ -87,7 +87,7 @@ export default function PerformanceChart({ equityCurve, startingCapital = 10_000
               key={key}
               onClick={() => setPeriod(key)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 cursor-pointer ${
-                period === key ? 'bg-accent text-white shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
+                period === key ? 'bg-accent text-on-accent shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
               }`}
             >{key}</button>
           ))}

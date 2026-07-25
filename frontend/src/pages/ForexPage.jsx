@@ -33,7 +33,10 @@ const DEMO_SIGNALS = [
     current_price: 0.64812, htf_bias: 'bullish',
     ema_aligned: true, fvg_present: true, liq_sweep: true,
     fvg_zone: [0.64850, 0.64720], sweep_level: 0.64505,
-    reason: '4H bias: BULLISH | Sell-side sweep @ 0.64505 | Bullish FVG 0.64720–0.64850',
+    fib_golden: true, fib_zone: [0.64790, 0.64680],
+    fib_levels: { '0.5': 0.64840, '0.618': 0.64790, '0.786': 0.64680 },
+    ema200_aligned: true,
+    reason: '4H bias: BULLISH | Sell-side sweep @ 0.64505 | Bullish FVG 0.64720–0.64850 | Price in Fib golden zone (OTE) | Above EMA200',
     timestamp: 'Demo Mode', timeframe_entry: '15m', timeframe_bias: '4H',
   },
   {
@@ -43,7 +46,10 @@ const DEMO_SIGNALS = [
     current_price: 1.13415, htf_bias: 'bearish',
     ema_aligned: true, fvg_present: true, liq_sweep: false,
     fvg_zone: [1.13500, 1.13350], sweep_level: null,
-    reason: '4H bias: BEARISH | Bearish FVG 1.13350–1.13500 | EMA9 < EMA15',
+    fib_golden: true, fib_zone: [1.13470, 1.13360],
+    fib_levels: { '0.5': 1.13520, '0.618': 1.13470, '0.786': 1.13360 },
+    ema200_aligned: true,
+    reason: '4H bias: BEARISH | Bearish FVG 1.13350–1.13500 | EMA9 < EMA15 | Price in Fib golden zone (OTE) | Below EMA200',
     timestamp: 'Demo Mode', timeframe_entry: '15m', timeframe_bias: '4H',
   },
   {
@@ -53,7 +59,10 @@ const DEMO_SIGNALS = [
     current_price: 1.27320, htf_bias: 'bullish',
     ema_aligned: true, fvg_present: false, liq_sweep: true,
     fvg_zone: null, sweep_level: 1.26975,
-    reason: '4H bias: BULLISH | Sell-side sweep @ 1.26975 | EMA9 > EMA15',
+    fib_golden: false, fib_zone: [1.27260, 1.27050],
+    fib_levels: { '0.5': 1.27400, '0.618': 1.27260, '0.786': 1.27050 },
+    ema200_aligned: true,
+    reason: '4H bias: BULLISH | Sell-side sweep @ 1.26975 | EMA9 > EMA15 | Above EMA200',
     timestamp: 'Demo Mode', timeframe_entry: '15m', timeframe_bias: '4H',
   },
 ];
@@ -139,9 +148,11 @@ function EMALevels({ sig }) {
 function ConfluenceList({ sig }) {
   const items = [
     { label: `4H Bias ${sig.htf_bias?.toUpperCase() || '—'}`, ok: sig.htf_bias !== 'neutral', weight: 30 },
-    { label: 'Liquidity Sweep', ok: sig.liq_sweep, weight: 35 },
+    { label: 'Liquidity Sweep (SMC)', ok: sig.liq_sweep, weight: 35 },
     { label: 'Fair Value Gap', ok: sig.fvg_present, weight: 25 },
+    { label: 'Fibonacci OTE (0.62–0.79)', ok: sig.fib_golden, weight: 20 },
     { label: 'EMA 9/15 Aligned', ok: sig.ema_aligned, weight: 10 },
+    { label: 'EMA 200 Trend', ok: sig.ema200_aligned, weight: 10 },
   ];
   return (
     <div className="space-y-1 mt-2">
@@ -240,6 +251,16 @@ function SignalCard({ sig, expanded, onToggle, onViewChart }) {
               FVG
             </span>
           )}
+          {sig.fib_golden && (
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-gold-subtle text-gold font-bold">
+              Fib OTE
+            </span>
+          )}
+          {sig.ema200_aligned && (
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-subtle text-purple font-bold">
+              EMA200
+            </span>
+          )}
           {/* MTF confluence badge */}
           {sig.mtf_score !== undefined && (
             <span
@@ -266,7 +287,7 @@ function SignalCard({ sig, expanded, onToggle, onViewChart }) {
           {onViewChart && (
             <button
               onClick={(e) => { e.stopPropagation(); onViewChart(sig); }}
-              className="ml-auto flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-lg bg-accent-subtle text-accent hover:bg-accent hover:text-white transition-all font-bold"
+              className="ml-auto flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-lg bg-accent-subtle text-accent hover:bg-accent hover:text-on-accent transition-all font-bold"
             >
               <BarChart2 size={8} /> Chart
             </button>
@@ -321,6 +342,31 @@ function SignalCard({ sig, expanded, onToggle, onViewChart }) {
               <span className="text-[10px] text-warning">
                 Liquidity swept at: <span className="font-mono font-bold">{formatPrice(sig.sweep_level, sig.pair)}</span>
               </span>
+            </div>
+          )}
+
+          {sig.fib_zone && (
+            <div>
+              <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <Target size={9} /> Fibonacci OTE — Golden Zone (0.62–0.79)
+              </div>
+              <div className="rounded-lg p-2 bg-gold-subtle flex items-center justify-between">
+                <span className="text-[10px] text-gold font-mono">{formatPrice(sig.fib_zone[1], sig.pair)}</span>
+                <span className="text-[9px] text-text-muted">optimal entry pocket ↔</span>
+                <span className="text-[10px] text-gold font-mono">{formatPrice(sig.fib_zone[0], sig.pair)}</span>
+              </div>
+              {sig.fib_levels && (
+                <div className="grid grid-cols-3 gap-1.5 mt-1.5">
+                  {['0.5', '0.618', '0.786'].map((k) => (
+                    sig.fib_levels[k] != null && (
+                      <div key={k} className="rounded-lg p-1.5 text-center bg-surface/60">
+                        <div className="text-[8px] text-text-muted">Fib {k}</div>
+                        <div className="font-mono text-[10px] text-text-primary">{formatPrice(sig.fib_levels[k], sig.pair)}</div>
+                      </div>
+                    )
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -583,7 +629,7 @@ export default function ForexPage() {
             </div>
           </div>
           <p className="text-[11px] text-text-muted ml-10 mt-0.5">
-            ICT / SMC — FVG + Liquidity Sweep + EMA 9/15/200 — ADX + Session + ATR
+            ICT / SMC — FVG · Liquidity Sweep · Fibonacci OTE · EMA 9/15/200 · ADX · Session · ATR
           </p>
         </div>
 
@@ -603,7 +649,7 @@ export default function ForexPage() {
           <button
             onClick={fetchSignals}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-accent-subtle text-accent hover:bg-accent hover:text-white transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-accent-subtle text-accent hover:bg-accent hover:text-on-accent transition-all"
           >
             <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
             {loading ? 'Scanning…' : 'Refresh'}
@@ -622,13 +668,13 @@ export default function ForexPage() {
       {/* ── Stats ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         {[
-          { label: 'Total Signals',  val: filtered.length, icon: Zap,          col: '#388bfd' },
-          { label: 'BUY Setups',     val: buyCount,        icon: TrendingUp,   col: '#3fb950' },
-          { label: 'SELL Setups',    val: sellCount,       icon: TrendingDown, col: '#f85149' },
+          { label: 'Total Signals',  val: filtered.length, icon: Zap,          col: 'var(--color-accent)' },
+          { label: 'BUY Setups',     val: buyCount,        icon: TrendingUp,   col: 'var(--color-positive)' },
+          { label: 'SELL Setups',    val: sellCount,       icon: TrendingDown, col: 'var(--color-negative)' },
           { label: 'Avg Confidence', val: filtered.length
               ? Math.round(filtered.reduce((a, s) => a + s.confidence, 0) / filtered.length) + '%'
               : '—',
-            icon: Shield, col: '#e3b341' },
+            icon: Shield, col: 'var(--color-gold)' },
         ].map((s, i) => (
           <div key={i} className="glass-card p-3 flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: s.col + '22' }}>
@@ -651,7 +697,7 @@ export default function ForexPage() {
               onClick={() => setActiveTab(t.id)}
               className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                 activeTab === t.id
-                  ? 'bg-accent text-white shadow-[0_0_12px_rgba(56,139,253,0.4)]'
+                  ? 'bg-accent text-on-accent shadow-[0_0_14px_rgba(197,242,78,0.35)]'
                   : 'text-text-secondary hover:text-text-primary'
               }`}
             >
@@ -723,7 +769,7 @@ export default function ForexPage() {
                     onClick={() => setChartPair(p)}
                     className={`px-3 py-2 rounded-lg text-xs font-mono font-bold transition-all ${
                       chartPair === p
-                        ? 'bg-accent text-white shadow-[0_0_10px_rgba(56,139,253,0.3)]'
+                        ? 'bg-accent text-on-accent shadow-[0_0_12px_rgba(197,242,78,0.3)]'
                         : 'bg-surface border border-border text-text-secondary hover:border-accent hover:text-accent'
                     }`}
                   >
@@ -759,7 +805,7 @@ export default function ForexPage() {
                   onClick={() => setChartInterval(iv)}
                   className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${
                     chartInterval === iv
-                      ? 'bg-accent text-white'
+                      ? 'bg-accent text-on-accent'
                       : 'bg-surface border border-border text-text-secondary hover:text-text-primary'
                   }`}
                 >
@@ -769,7 +815,7 @@ export default function ForexPage() {
             </div>
             <button
               onClick={() => fetchCandles(chartPair, chartInterval)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-accent-subtle text-accent hover:bg-accent hover:text-white transition-all ml-auto"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-accent-subtle text-accent hover:bg-accent hover:text-on-accent transition-all ml-auto"
             >
               <RefreshCw size={9} className={chartLoading ? 'animate-spin' : ''} />
               Refresh
@@ -882,7 +928,7 @@ export default function ForexPage() {
             <span className="text-sm font-semibold text-text-primary">Trade Log</span>
             <button
               onClick={() => setShowAddTrade((v) => !v)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-accent text-white hover:bg-accent/80 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-accent text-on-accent hover:bg-accent/80 transition-all"
             >
               <PlusCircle size={11} /> Add Trade
             </button>

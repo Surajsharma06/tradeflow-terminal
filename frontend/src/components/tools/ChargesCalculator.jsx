@@ -99,7 +99,7 @@ export default function ChargesCalculator({ className = '' }) {
               onClick={() => setOrderType(type.key)}
               className={`flex-1 px-2.5 py-2 text-xs font-medium rounded-md transition-all duration-200 whitespace-nowrap
                 ${orderType === type.key
-                  ? 'bg-accent text-white shadow-sm'
+                  ? 'bg-accent text-on-accent shadow-sm'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
                 }`}
             >

@@ -235,7 +235,7 @@ export default function TradingChart() {
                 onClick={() => setSelectedTimeframe(tf)}
                 className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all duration-200 ${
                   selectedTimeframe === tf
-                    ? 'bg-accent text-white shadow-[0_0_10px_rgba(56,139,253,0.3)]'
+                    ? 'bg-accent text-on-accent shadow-[0_0_10px_rgba(56,139,253,0.3)]'
                     : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
                 }`}
               >

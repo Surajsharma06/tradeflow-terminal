@@ -12,73 +12,77 @@
    ================================================================ */
 
 :root {
-  /* ── Background Surfaces (warm charcoal-ink) ── */
-  --color-bg: #0d0f0e;
-  --color-bg-alt: #131614;
-  --color-surface: #181c1a;
-  --color-surface-elevated: #1f2421;
-  --color-surface-hover: #262b28;
-  --color-surface-active: #2f352f;
+  /* ── Background Surfaces (olive-charcoal near-black) ── */
+  --color-bg: #0b0d0a;
+  --color-bg-alt: #101310;
+  --color-surface: #161915;
+  --color-surface-elevated: #1c211b;
+  --color-surface-hover: #242a23;
+  --color-surface-active: #2e352c;
 
   /* ── Border & Divider ── */
-  --color-border: #2a302c;
-  --color-border-light: #384038;
-  --color-border-focus: #6fd0a6;
-  --color-border-glow: rgba(111, 208, 166, 0.4);
+  --color-border: #262b23;
+  --color-border-light: #353c30;
+  --color-border-focus: #c5f24e;
+  --color-border-glow: rgba(197, 242, 78, 0.4);
 
   /* ── Text ── */
-  --color-text-primary: #eef2ee;
-  --color-text-secondary: #9aa79d;
-  --color-text-tertiary: #74837a;
-  --color-text-muted: #525d55;
+  --color-text-primary: #f4f7ee;
+  --color-text-secondary: #a4af96;
+  --color-text-tertiary: #7c8770;
+  --color-text-muted: #58614c;
 
   /* ── Trading Colors ── */
-  --color-positive: #45cf95;
-  --color-positive-subtle: rgba(69, 207, 149, 0.16);
-  --color-positive-strong: #6ee7b0;
-  --color-negative: #ff6b62;
-  --color-negative-subtle: rgba(255, 107, 98, 0.16);
-  --color-negative-strong: #ff958d;
-  --color-warning: #f0b544;
-  --color-warning-subtle: rgba(240, 181, 68, 0.16);
-  --color-info: #58c6d8;
-  --color-info-subtle: rgba(88, 198, 216, 0.16);
+  --color-positive: #7fe05a;
+  --color-positive-subtle: rgba(127, 224, 90, 0.16);
+  --color-positive-strong: #a3f27f;
+  --color-negative: #ff5d5d;
+  --color-negative-subtle: rgba(255, 93, 93, 0.16);
+  --color-negative-strong: #ff8a8a;
+  --color-warning: #f5c451;
+  --color-warning-subtle: rgba(245, 196, 81, 0.16);
+  --color-info: #5b9bff;
+  --color-info-subtle: rgba(91, 155, 255, 0.16);
 
-  /* ── Accent & Brand (calm sage-mint) ── */
-  --color-accent: #6fd0a6;
-  --color-accent-subtle: rgba(111, 208, 166, 0.16);
-  --color-accent-hover: #8ce0bc;
-  --color-accent-muted: #4bab84;
-  --color-purple: #7fd4c4;
-  --color-purple-subtle: rgba(127, 212, 196, 0.16);
-  --color-gold: #ecc463;
-  --color-gold-subtle: rgba(236, 196, 99, 0.16);
-  --color-cyan: #5fd4c0;
-  --color-cyan-subtle: rgba(95, 212, 192, 0.14);
-  --color-pink: #f19bb0;
-  --color-pink-subtle: rgba(241, 155, 176, 0.14);
+  /* ── Accent & Brand (signature lime-yellow) ── */
+  --color-accent: #c5f24e;
+  --color-accent-subtle: rgba(197, 242, 78, 0.16);
+  --color-accent-hover: #d6ff6a;
+  --color-accent-muted: #9bc22f;
+  --color-purple: #8f7bff;
+  --color-purple-subtle: rgba(143, 123, 255, 0.18);
+  --color-gold: #f5c451;
+  --color-gold-subtle: rgba(245, 196, 81, 0.16);
+  --color-cyan: #47d6c0;
+  --color-cyan-subtle: rgba(71, 214, 192, 0.16);
+  --color-pink: #ff5db1;
+  --color-pink-subtle: rgba(255, 93, 177, 0.16);
 
   /* ── Ink emphasis (near-black cards / primary buttons) ── */
-  --color-ink: #0c0e0d;
-  --color-ink-soft: #171b19;
-  --color-on-ink: #f3f6f2;
+  --color-ink: #090b08;
+  --color-ink-soft: #14170f;
+  --color-on-ink: #f4f7ee;
+
+  /* Readable text color when placed on a solid accent fill.
+     Dark theme accent is bright lime → needs near-black text. */
+  --color-on-accent: #10140a;
 
   /* ── Chart Candle Colors ── */
-  --color-candle-up: #45cf95;
-  --color-candle-down: #ff6b62;
+  --color-candle-up: #7fe05a;
+  --color-candle-down: #ff5d5d;
 
-  /* ── Ambient gradient blobs (app background) ── */
-  --ambient-1: rgba(111, 208, 166, 0.12);
-  --ambient-2: rgba(127, 212, 196, 0.10);
-  --ambient-3: rgba(236, 196, 99, 0.06);
+  /* ── Ambient gradient blobs (app background) — olive/lime glow ── */
+  --ambient-1: rgba(197, 242, 78, 0.12);
+  --ambient-2: rgba(143, 123, 255, 0.10);
+  --ambient-3: rgba(245, 196, 81, 0.07);
 
-  /* ── Glass / matte cards ── */
-  --glass-bg: linear-gradient(165deg, rgba(31, 36, 33, 0.86), rgba(21, 25, 23, 0.78));
-  --glass-border: rgba(120, 150, 135, 0.16);
-  --glass-highlight: rgba(255, 255, 255, 0.05);
-  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  --glass-hover-border: rgba(111, 208, 166, 0.34);
-  --glass-hover-glow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  /* ── Glass / elevated dark tiles ── */
+  --glass-bg: linear-gradient(160deg, rgba(30, 35, 26, 0.9), rgba(18, 21, 16, 0.82));
+  --glass-border: rgba(150, 170, 110, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.045);
+  --glass-shadow: 0 12px 34px rgba(0, 0, 0, 0.46);
+  --glass-hover-border: rgba(197, 242, 78, 0.3);
+  --glass-hover-glow: 0 18px 44px rgba(0, 0, 0, 0.5);
 
   /* ── Typography ── */
   --font-sans: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -154,6 +158,9 @@
   --color-ink: #141815;
   --color-ink-soft: #1c211d;
   --color-on-ink: #f2f6f1;
+
+  /* Light theme accent is a deep sage → white text reads fine on it. */
+  --color-on-accent: #ffffff;
 
   --color-candle-up: #12a05f;
   --color-candle-down: #e05650;
@@ -418,6 +425,7 @@
   .bg-surface-hover    { background-color: var(--color-surface-hover); }
   .bg-surface-active   { background-color: var(--color-surface-active); }
 
+  .text-on-accent      { color: var(--color-on-accent); }
   .text-text-primary   { color: var(--color-text-primary); }
   .text-text-secondary { color: var(--color-text-secondary); }
   .text-text-tertiary  { color: var(--color-text-tertiary); }
